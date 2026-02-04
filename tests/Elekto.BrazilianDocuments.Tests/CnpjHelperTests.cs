@@ -79,6 +79,20 @@ public class CnpjHelperTests
     }
 
     [Test]
+    public void Validade_WithEnoughLength_ButFewValidChars_ShouldReturnFalse()
+    {
+        // Length is 8 (ok), but only 4 valid chars (digits)
+        Assert.That(CnpjHelper.Validate("1.2.3.4."), Is.False);
+    }
+
+    [Test]
+    public void Validade_WithEnoughLength_ButTooManyValidChars_ShouldReturnFalse()
+    {
+        // Length is 15 (ok), but 15 valid chars (digits) -> Max is 14
+        Assert.That(CnpjHelper.Validate("123456789012345"), Is.False);
+    }
+
+    [Test]
     public void Create_FromRootAndOrder_ShouldReturnValidCnpj()
     {
         var (cnpj, digits) = CnpjHelper.Create("09358105", "0001");
@@ -130,6 +144,27 @@ public class CnpjHelperTests
 
         Assert.That(cnpj, Is.EqualTo("09358105000191"));
         Assert.That(CnpjHelper.Validate(cnpj), Is.True);
+    }
+
+    [Test]
+    public void Create_FromSingleString_WithNull_ShouldThrowArgumentNullException()
+    {
+        Assert.That(() => CnpjHelper.Create(null!),
+            Throws.TypeOf<ArgumentNullException>());
+    }
+
+    [Test]
+    public void Create_FromSingleString_WithEmpty_ShouldThrowArgumentNullException()
+    {
+        Assert.That(() => CnpjHelper.Create(string.Empty),
+            Throws.TypeOf<ArgumentNullException>());
+    }
+
+    [Test]
+    public void Create_FromSingleString_WithWhitespace_ShouldThrowArgumentNullException()
+    {
+        Assert.That(() => CnpjHelper.Create("   "),
+            Throws.TypeOf<ArgumentNullException>());
     }
 
     [Test]
@@ -214,6 +249,20 @@ public class CnpjHelperTests
         // Validate with leading zeros omitted
         Assert.That(CnpjHelper.Validate("1000136"), Is.True);
         Assert.That(CnpjHelper.Validate("1/0001-36"), Is.True);
+    }
+
+    [Test]
+    public void Validate_WithTrailingPunctuation_ShouldBeValid()
+    {
+        // Punctuation is ignored, so trailing dot is accepted if numeric part is valid
+        Assert.That(CnpjHelper.Validate("09358105000191."), Is.True);
+    }
+
+    [Test]
+    public void Create_RootWithPunctuation_ShouldThrow()
+    {
+         // Punctuation is not allowed in Create root parameter
+         Assert.That(() => CnpjHelper.Create("12.3", "0001"), Throws.ArgumentException);
     }
 
     [Test]

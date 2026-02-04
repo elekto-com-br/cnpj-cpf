@@ -14,7 +14,7 @@ internal static class InputSanitizer
     /// <returns>A sanitized string safe for logging.</returns>
     public static string SanitizeForMessage(string? input)
     {
-        if (string.IsNullOrEmpty(input))
+        if (string.IsNullOrWhiteSpace(input))
             return string.Empty;
 
         // Limit length to prevent excessive log entries

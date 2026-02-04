@@ -237,6 +237,21 @@ public class CnpjTests
     }
 
     [Test]
+    public void Value_ShouldReturnCleanCnpj()
+    {
+        var cnpj = new Cnpj("09.358.105/0001-91");
+        Assert.That(cnpj.Value, Is.EqualTo("09358105000191"));
+    }
+
+    [Test]
+    public void CompareTo_Object_WithBoxedCnpj_ShouldWork()
+    {
+        var cnpj = new Cnpj("09358105000191");
+        object obj = new Cnpj("09358105000191");
+        Assert.That(cnpj.CompareTo(obj), Is.EqualTo(0));
+    }
+
+    [Test]
     public void Root_ShouldReturnFirst8Characters()
     {
         var cnpj = new Cnpj("09358105000191");
@@ -357,6 +372,54 @@ public class CnpjTests
 
         Assert.That(cnpj1, Is.EqualTo(cnpj2));
         Assert.That(cnpj2, Is.EqualTo(cnpj3));
+    }
+
+    [Test]
+    public void Constructor_WithInputTooLong_ShouldThrowBadCnpjException()
+    {
+        var longString = new string('1', 20);
+        Assert.That(() => new Cnpj(longString), Throws.TypeOf<BadCnpjException>());
+    }
+
+    [Test]
+    public void CompareTo_WithNull_ShouldReturnPositive()
+    {
+        var cnpj = new Cnpj("09358105000191");
+        Assert.That(cnpj.CompareTo(null), Is.GreaterThan(0));
+    }
+
+    [Test]
+    public void CompareTo_WithDifferentType_ShouldThrowArgumentException()
+    {
+        var cnpj = new Cnpj("09358105000191");
+        Assert.That(() => cnpj.CompareTo("not a cnpj"), Throws.ArgumentException);
+    }
+
+    [Test]
+    public void Equals_WithNull_ShouldReturnFalse()
+    {
+        var cnpj = new Cnpj("09358105000191");
+        Assert.That(cnpj.Equals(null), Is.False);
+    }
+
+    [Test]
+    public void Equals_WithDifferentType_ShouldReturnFalse()
+    {
+        var cnpj = new Cnpj("09358105000191");
+        Assert.That(cnpj.Equals("not a cnpj"), Is.False);
+    }
+
+    [Test]
+    public void ImplicitOperator_WithInvalidString_ShouldThrowBadCnpjException()
+    {
+        Assert.That(() => { Cnpj? c = "invalid-cnpj"; }, Throws.TypeOf<BadCnpjException>());
+    }
+
+    [Test]
+    public void JsonSerialization_WithInvalidTokenType_ShouldThrowJsonException()
+    {
+        var json = "12345678901234"; // Number instead of string
+        Assert.That(() => JsonSerializer.Deserialize<Cnpj>(json), Throws.TypeOf<JsonException>());
     }
 
     [Test]

@@ -368,6 +368,102 @@ public class CpfTests
     }
 
     [Test]
+    public void CompareTo_Object_WithBoxedCpf_ShouldWork()
+    {
+        var cpf = new Cpf(12345678909L);
+        object obj = new Cpf(12345678909L);
+        Assert.That(cpf.CompareTo(obj), Is.EqualTo(0));
+    }
+
+    [Test]
+    public void CompareTo_Object_WithCnpj_ShouldThrowArgumentException()
+    {
+        var cpf = new Cpf(12345678909L);
+        object obj = new Cnpj("09358105000191");
+        Assert.That(() => cpf.CompareTo(obj), Throws.ArgumentException);
+    }
+    
+    [Test]
+    public void NewCpf_WithNonNumericString_ShouldThrowBadCpfException()
+    {
+        Assert.That(() => Cpf.NewCpf("no-cpf"),
+            Throws.TypeOf<BadCpfException>());
+    }
+
+    [Test]
+    public void Parse_Long_WithInvalidValue_ShouldThrowBadCpfException()
+    {
+        // 12345678900 is invalid checksum
+        Assert.That(() => Cpf.Parse(12345678900L),
+            Throws.TypeOf<BadCpfException>());
+    }
+
+    [Test]
+    public void Cpf_WithTooLongString_ShouldBeInvalid()
+    {
+        var longCpf = new string('1', 25);
+        Assert.That(Cpf.IsValid(longCpf), Is.False);
+    }
+
+    [Test]
+    public void CompareTo_WithNull_ShouldReturnPositive()
+    {
+        var cpf = new Cpf(12345678909L);
+        Assert.That(cpf.CompareTo(null), Is.GreaterThan(0));
+    }
+
+    [Test]
+    public void CompareTo_WithDifferentType_ShouldThrowArgumentException()
+    {
+        var cpf = new Cpf(12345678909L);
+        Assert.That(() => cpf.CompareTo("not a cpf"), Throws.ArgumentException);
+    }
+
+    [Test]
+    public void Equals_WithNull_ShouldReturnFalse()
+    {
+        var cpf = new Cpf(12345678909L);
+        Assert.That(cpf.Equals(null), Is.False);
+    }
+
+    [Test]
+    public void Equals_WithDifferentType_ShouldReturnFalse()
+    {
+        var cpf = new Cpf(12345678909L);
+        Assert.That(cpf.Equals("not a cpf"), Is.False);
+    }
+
+    [Test]
+    public void ImplicitOperator_WithInvalidString_ShouldThrowBadCpfException()
+    {
+        Assert.That(() =>
+        {
+            Cpf? c = "invalid-cpf";
+        }, Throws.TypeOf<BadCpfException>());
+    }
+
+    [Test]
+    public void JsonSerialization_WithInvalidTokenType_ShouldThrowJsonException()
+    {
+        var json = "12345678909"; // Number instead of string
+        Assert.That(() => JsonSerializer.Deserialize<Cpf>(json), Throws.TypeOf<JsonException>());
+    }
+
+    [Test]
+    public void IsValid_WithOnlyPunctuation_ShouldReturnFalse()
+    {
+         // Covers digitCount < 1 check in slow path because "." and "-" are valid chars in loop but don't increment digitCount
+         Assert.That(Cpf.IsValid(".-"), Is.False);
+    }
+
+    [Test]
+    public void IsValid_With11CharsIncludingPunctuation_ShouldReturnTrue()
+    {
+        // Length 11, but contains punctuation -> Canonical is 012.345.678-90, that is valide
+        Assert.That(Cpf.IsValid("12345.67890"), Is.True);
+    }
+
+    [Test]
     [Ignore("Performance test - run manually")]
     public void Performance_Validation_ShouldBeEfficient()
     {
