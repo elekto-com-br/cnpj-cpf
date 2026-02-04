@@ -23,7 +23,7 @@ public class BadCnpjException : ArgumentException
     /// </summary>
     /// <param name="invalidCnpj">The invalid CNPJ value.</param>
     public BadCnpjException(string? invalidCnpj)
-        : base($"Invalid CNPJ: '{invalidCnpj}'.")
+        : base($"Invalid CNPJ: '{InputSanitizer.SanitizeForMessage(invalidCnpj)}'.")
     {
         InvalidCnpj = invalidCnpj;
     }

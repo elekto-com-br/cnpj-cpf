@@ -23,7 +23,7 @@ public class BadCpfException : ArgumentException
     /// </summary>
     /// <param name="invalidCpf">The invalid CPF value.</param>
     public BadCpfException(string? invalidCpf)
-        : base($"Invalid CPF: '{invalidCpf}'.")
+        : base($"Invalid CPF: '{InputSanitizer.SanitizeForMessage(invalidCpf)}'.")
     {
         InvalidCpf = invalidCpf;
     }
