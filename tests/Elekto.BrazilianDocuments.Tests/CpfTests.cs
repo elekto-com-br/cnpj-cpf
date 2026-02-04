@@ -464,7 +464,6 @@ public class CpfTests
     }
 
     [Test]
-    [Ignore("Performance test - run manually")]
     public void Performance_Validation_ShouldBeEfficient()
     {
         var rand = new Random(42);

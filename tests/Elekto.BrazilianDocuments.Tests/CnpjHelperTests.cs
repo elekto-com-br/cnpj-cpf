@@ -266,7 +266,6 @@ public class CnpjHelperTests
     }
 
     [Test]
-    [Ignore("Performance test - run manually")]
     public void Performance_Validation_ShouldBeEfficient()
     {
         const double probAlpha = 0.2;

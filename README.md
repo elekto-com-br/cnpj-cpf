@@ -144,8 +144,8 @@ The validation algorithms are optimized for minimal memory allocation:
 - **Check digit calculation**: Performed in a single loop for both digits
 
 Typical performance on modern hardware:
-- CNPJ validation: ~1,000,000+ validations/second
-- CPF validation: ~2,000,000+ validations/second
+- CNPJ validation: ~7,000,000+ validations/second
+- CPF validation: ~40,000,000+ validations/second
 
 ## Credits
 
