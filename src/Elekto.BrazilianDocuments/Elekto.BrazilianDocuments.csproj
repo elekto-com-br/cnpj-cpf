@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;netstandard2.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <!-- NuGet Package Configuration -->
+    <PackageId>Elekto.BrazilianDocuments</PackageId>
+    <Version>2.0.0</Version>
+    <Authors>Elekto Produtos Financeiros</Authors>
+    <Company>Elekto</Company>
+    <Description>High-performance, zero-allocation validation for Brazilian documents (CNPJ and CPF). Supports the new alphanumeric CNPJ format introduced by Brazilian Federal Revenue Service.</Description>
+    <PackageTags>cnpj;cpf;brazil;brazilian;validation;documents;receita-federal</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/elekto-com-br/cnpj-cpf</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/elekto-com-br/cnpj-cpf</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Copyright>Copyright (c) 2013-2025 Elekto Produtos Financeiros</Copyright>
+
+    <!-- Enable Source Link for debugging -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <!-- Polyfill for netstandard2.0 -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+
+</Project>
