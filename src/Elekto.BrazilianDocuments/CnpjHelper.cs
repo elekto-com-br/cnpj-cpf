@@ -36,7 +36,7 @@ public static class CnpjHelper
     public static bool Validate(string? cnpj)
     {
         // Empty, too long or too short ("1/0001-36" is the shortest valid CNPJ)
-        if (string.IsNullOrWhiteSpace(cnpj) || cnpj.Length > 18 || cnpj.Length < 7)
+        if (string.IsNullOrWhiteSpace(cnpj) || cnpj!.Length > 18 || cnpj.Length < 7)
             return false;
 
         // Count valid characters

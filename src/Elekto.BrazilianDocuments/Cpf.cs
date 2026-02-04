@@ -357,6 +357,12 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>
         cpf = 0;
         if (string.IsNullOrEmpty(input)) return false;
 
+        // Security: Prevent DoS with excessively long inputs
+        // Max valid CPF with formatting: "000.000.000-00" = 14 characters
+        // Allow some extra room for unusual formatting, but cap at reasonable limit
+        if (input!.Length > 20)
+            return false;
+
         // Fast path: try parsing directly if no punctuation
         if (input.Length == 11 && !ContainsPunctuation(input))
         {
@@ -490,7 +496,7 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>
     public static implicit operator Cpf?(string? cpf)
     {
         if (string.IsNullOrEmpty(cpf)) return null;
-        return new Cpf(cpf);
+        return new Cpf(cpf!);
     }
 
     /// <summary>

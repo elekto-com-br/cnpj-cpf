@@ -23,9 +23,26 @@ public class BadCpfException : ArgumentException
     /// </summary>
     /// <param name="invalidCpf">The invalid CPF value.</param>
     public BadCpfException(string? invalidCpf)
-        : base($"Invalid CPF: '{invalidCpf}'.")
+        : base($"Invalid CPF: '{SanitizeForMessage(invalidCpf)}'.")
     {
         InvalidCpf = invalidCpf;
+    }
+
+    /// <summary>
+    /// Sanitizes input for safe inclusion in error messages to prevent log injection.
+    /// </summary>
+    private static string SanitizeForMessage(string? input)
+    {
+        if (string.IsNullOrEmpty(input))
+            return string.Empty;
+
+        // Limit length to prevent excessive log entries
+        const int maxLength = 20;
+        if (input!.Length > maxLength)
+            input = input.Substring(0, maxLength) + "...";
+
+        // Remove control characters and newlines to prevent log injection
+        return new string(input.Where(c => !char.IsControl(c)).ToArray());
     }
 
     /// <summary>

@@ -350,7 +350,7 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>
     public static implicit operator Cnpj?(string? cnpj)
     {
         if (string.IsNullOrEmpty(cnpj)) return null;
-        return new Cnpj(cnpj);
+        return new Cnpj(cnpj!);
     }
 
     /// <summary>
