@@ -1,0 +1,322 @@
+using NUnit.Framework;
+
+namespace Elekto.BrazilianDocuments.Tests;
+
+[TestFixture]
+public class CnpjHelperTests
+{
+    // Valid CNPJs for testing
+    private static readonly string[] ValidCnpjs =
+    [
+        "21.552.200/0001-27",
+        "98.503.200/0001-61",
+        "48.465.264/0001-47",
+        "86.674.875/0001-94",
+        "03.536.783/0001-10",
+        "03536783-0001/10",
+        "3.536.783/0001-10",
+        "3536783000110",
+        "12.ABC.345/01DE-35",
+        "00.ELE.KTO/0001-40",
+        "ELEKTO-0001/40",
+        "ELEKTO/0001-40",
+        "ELEKTO000140",
+        "00.ERR.ADO/ERRO-51",
+        "00ERRADOERRO51",
+        "ERRADOERRO51",
+        "ERRADO/ERRO-51",
+        "84.773.357/5047-53",
+        "84.773.357/504X-53",
+        "10263273483639",
+        "102632X3483639",
+        "93.774.412/9143-74",
+        "1/0001-36",
+        "1/000136",
+        "1000136",
+    ];
+
+    [Test]
+    public void Validate_WithValidCnpjs_ShouldReturnTrue()
+    {
+        foreach (var cnpj in ValidCnpjs)
+        {
+            Assert.That(CnpjHelper.Validate(cnpj), Is.True,
+                $"CNPJ '{cnpj}' should be valid.");
+        }
+    }
+
+    [Test]
+    public void Validate_WithInvalidCnpj_ShouldReturnFalse()
+    {
+        // Too few valid digits
+        Assert.That(CnpjHelper.Validate("12.345.678/0001-0"), Is.False,
+            "CNPJ with fewer than 14 valid digits should be invalid.");
+
+        // Incorrect check digit
+        Assert.That(CnpjHelper.Validate("21.552.200/0001-28"), Is.False,
+            "CNPJ with incorrect check digit should be invalid.");
+    }
+
+    [Test]
+    public void Validate_WithNullOrEmpty_ShouldReturnFalse()
+    {
+        Assert.That(CnpjHelper.Validate(null), Is.False, "Null input should be invalid.");
+        Assert.That(CnpjHelper.Validate(string.Empty), Is.False, "Empty input should be invalid.");
+        Assert.That(CnpjHelper.Validate("         "), Is.False, "Whitespace input should be invalid.");
+    }
+
+    [Test]
+    public void Validate_WithTooShortInput_ShouldReturnFalse()
+    {
+        Assert.That(CnpjHelper.Validate("123456"), Is.False, "Input shorter than 7 characters should be invalid.");
+    }
+
+    [Test]
+    public void Validate_WithTooLongInput_ShouldReturnFalse()
+    {
+        Assert.That(CnpjHelper.Validate("12345678901234567890"), Is.False,
+            "Input longer than 18 characters should be invalid.");
+    }
+
+    [Test]
+    public void Create_FromRootAndOrder_ShouldReturnValidCnpj()
+    {
+        var (cnpj, digits) = CnpjHelper.Create("09358105", "0001");
+
+        Assert.That(cnpj, Is.EqualTo("09358105000191"));
+        Assert.That(digits, Is.EqualTo(91)); // dv1=9, dv2=1 => 9*10+1=91
+        Assert.That(CnpjHelper.Validate(cnpj), Is.True);
+    }
+
+    [Test]
+    public void Create_FromRootAndOrder_WithPadding_ShouldWork()
+    {
+        var (cnpj, _) = CnpjHelper.Create("1", "1");
+
+        Assert.That(cnpj, Is.EqualTo("00000001000136"));
+        Assert.That(CnpjHelper.Validate(cnpj), Is.True);
+    }
+
+    [Test]
+    public void Create_ElektoCnpj_ShouldWork()
+    {
+        var (cnpj, _) = CnpjHelper.Create("ELEKTO", "0001");
+
+        Assert.That(cnpj, Is.EqualTo("00ELEKTO000140"));
+        Assert.That(CnpjHelper.Validate(cnpj), Is.True);
+    }
+
+    [Test]
+    public void Create_ErrorCnpj_ShouldWork()
+    {
+        var (cnpj, _) = CnpjHelper.Create("ERRADO", "ERRO");
+
+        Assert.That(cnpj, Is.EqualTo("00ERRADOERRO51"));
+        Assert.That(CnpjHelper.Validate(cnpj), Is.True);
+    }
+
+    [Test]
+    public void Create_FromRootAndOrder_ShouldValidate()
+    {
+        var (cnpj, _) = CnpjHelper.Create("ELEKTO", "2011");
+
+        Assert.That(CnpjHelper.Validate(cnpj), Is.True);
+    }
+
+    [Test]
+    public void Create_FromSingleString_ShouldWork()
+    {
+        var (cnpj, _) = CnpjHelper.Create("093581050001");
+
+        Assert.That(cnpj, Is.EqualTo("09358105000191"));
+        Assert.That(CnpjHelper.Validate(cnpj), Is.True);
+    }
+
+    [Test]
+    public void Create_WithNullRoot_ShouldThrowArgumentNullException()
+    {
+        Assert.That(() => CnpjHelper.Create(null!, "0001"),
+            Throws.TypeOf<ArgumentNullException>());
+    }
+
+    [Test]
+    public void Create_WithNullOrder_ShouldThrowArgumentNullException()
+    {
+        Assert.That(() => CnpjHelper.Create("12345678", null!),
+            Throws.TypeOf<ArgumentNullException>());
+    }
+
+    [Test]
+    public void Create_WithTooLongRoot_ShouldThrowArgumentException()
+    {
+        Assert.That(() => CnpjHelper.Create("123456789", "0001"),
+            Throws.TypeOf<ArgumentException>()
+                .With.Property("ParamName").EqualTo("root"));
+    }
+
+    [Test]
+    public void Create_WithTooLongOrder_ShouldThrowArgumentException()
+    {
+        Assert.That(() => CnpjHelper.Create("12345678", "00011"),
+            Throws.TypeOf<ArgumentException>()
+                .With.Property("ParamName").EqualTo("order"));
+    }
+
+    [Test]
+    public void Create_WithInvalidCharactersInRoot_ShouldThrowArgumentException()
+    {
+        Assert.That(() => CnpjHelper.Create("1234$678", "0001"),
+            Throws.TypeOf<ArgumentException>()
+                .With.Property("ParamName").EqualTo("root"));
+    }
+
+    [Test]
+    public void Create_WithInvalidCharactersInOrder_ShouldThrowArgumentException()
+    {
+        Assert.That(() => CnpjHelper.Create("12345678", "00#1"),
+            Throws.TypeOf<ArgumentException>()
+                .With.Property("ParamName").EqualTo("order"));
+    }
+
+    [Test]
+    public void Create_WithLowercaseInput_ShouldNormalizeToUppercase()
+    {
+        var (cnpj1, _) = CnpjHelper.Create("elekto", "0001");
+        var (cnpj2, _) = CnpjHelper.Create("ELEKTO", "0001");
+
+        Assert.That(cnpj1, Is.EqualTo(cnpj2));
+    }
+
+    [Test]
+    public void Created_RandomCnpjs_ShouldAllBeValid()
+    {
+        var rand = new Random(69);
+        const int numToCreate = 10_000;
+
+        for (var i = 0; i < numToCreate; i++)
+        {
+            var useAlpha = rand.NextDouble() <= 0.2;
+            var (root, order) = CreateRandom(rand, useAlpha);
+            var (cnpj, _) = CnpjHelper.Create(root, order);
+
+            Assert.That(CnpjHelper.Validate(cnpj), Is.True,
+                $"Created CNPJ '{cnpj}' should be valid.");
+        }
+    }
+
+    [Test]
+    public void Validate_WithLeadingZerosOmitted_ShouldWork()
+    {
+        // Create a CNPJ that starts with zeros
+        var (fullCnpj, _) = CnpjHelper.Create("1", "1");
+        Assert.That(fullCnpj, Is.EqualTo("00000001000136"));
+
+        // Validate with leading zeros omitted
+        Assert.That(CnpjHelper.Validate("1000136"), Is.True);
+        Assert.That(CnpjHelper.Validate("1/0001-36"), Is.True);
+    }
+
+    [Test]
+    [Ignore("Performance test - run manually")]
+    public void Performance_Validation_ShouldBeEfficient()
+    {
+        const double probAlpha = 0.2;
+        const double probTrimStart = 0.5;
+        const double probError = 0.1;
+
+        var rand = new Random(69);
+        const int numToCreate = 3_000_000;
+
+        var all = new (string cnpj, bool isValid, string validCnpj)[numToCreate];
+
+        var sw = new System.Diagnostics.Stopwatch();
+
+        // Create test data
+        for (var i = 0; i < numToCreate; i++)
+        {
+            var useAlpha = rand.NextDouble() <= probAlpha;
+            var (root, order) = CreateRandom(rand, useAlpha);
+
+            sw.Start();
+            var (cnpj, _) = CnpjHelper.Create(root, order);
+            sw.Stop();
+            var validCnpj = cnpj;
+
+            var shouldTrimZero = root.StartsWith("0") && root.Length > 1 && rand.NextDouble() <= probTrimStart;
+            if (shouldTrimZero)
+            {
+                cnpj = cnpj.TrimStart('0');
+            }
+
+            var isError = rand.NextDouble() <= probError;
+            if (isError)
+            {
+                var posError = rand.Next(cnpj.Length);
+                var original = char.ToUpper(cnpj[posError]);
+                var substitute = (char)(original + 1);
+                if (substitute > 'Z')
+                    substitute = '0';
+                if (substitute is > '9' and < 'A')
+                    substitute = 'A';
+
+                cnpj = cnpj.Substring(0, posError) + substitute + cnpj.Substring(posError + 1);
+
+                if (substitute == '0' && cnpj.EndsWith("00"))
+                {
+                    cnpj = validCnpj.Substring(0, 12) + "99";
+                }
+            }
+
+            all[i] = (cnpj, !isError, validCnpj);
+        }
+
+        Console.WriteLine($"Creation total: {numToCreate:N0} in {sw.Elapsed:g}");
+        Console.WriteLine($"Creation: {(numToCreate / sw.Elapsed.TotalSeconds):N0} c/s");
+
+        sw.Reset();
+
+        var before2 = GC.CollectionCount(2);
+        var before1 = GC.CollectionCount(1);
+        var before0 = GC.CollectionCount(0);
+
+        // Validate all
+        for (var i = 0; i < numToCreate; i++)
+        {
+            sw.Start();
+            var isValid = CnpjHelper.Validate(all[i].cnpj);
+            sw.Stop();
+
+            Assert.That(isValid, Is.EqualTo(all[i].isValid),
+                $"CNPJ {i:N0} '{all[i].cnpj}' (original {all[i].validCnpj}) should be {(all[i].isValid ? "valid" : "invalid")}.");
+        }
+
+        Console.WriteLine($"GC Gen #2  : {GC.CollectionCount(2) - before2}");
+        Console.WriteLine($"GC Gen #1  : {GC.CollectionCount(1) - before1}");
+        Console.WriteLine($"GC Gen #0  : {GC.CollectionCount(0) - before0}");
+
+        Console.WriteLine($"Validation total: {numToCreate:N0} in {sw.Elapsed:g}");
+        Console.WriteLine($"Validation: {(numToCreate / sw.Elapsed.TotalSeconds):N0} v/s");
+    }
+
+    private static (string root, string order) CreateRandom(Random rand, bool useAlpha)
+    {
+        const string chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+        var max = useAlpha ? chars.Length : 10;
+
+        var rootChars = new char[8];
+        var orderChars = new char[4];
+
+        for (var i = 0; i < 8; i++)
+        {
+            rootChars[i] = chars[rand.Next(max)];
+        }
+
+        for (var j = 0; j < 4; j++)
+        {
+            orderChars[j] = chars[rand.Next(max)];
+        }
+
+        return (new string(rootChars), new string(orderChars));
+    }
+}
