@@ -1,4 +1,5 @@
 using System.Diagnostics.Contracts;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -44,6 +45,10 @@ namespace Elekto.BrazilianDocuments;
 [JsonConverter(typeof(CnpjJsonConverter))]
 public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>
 {
+    // Multipliers for check digit calculation
+    private static readonly int[] Multiplier1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    private static readonly int[] Multiplier2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+
     /// <summary>
     /// A valid but empty CNPJ (all zeros).
     /// </summary>
@@ -54,27 +59,28 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>
     /// </summary>
     private readonly string _cnpj;
 
+    private const int MaxInputLength = 18;
+
     /// <summary>
     /// Initializes a new instance of the <see cref="Cnpj"/> struct.
     /// </summary>
     /// <param name="cnpj">The CNPJ string to parse.</param>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="cnpj"/> is null or whitespace.</exception>
     /// <exception cref="BadDocumentException">Thrown when <paramref name="cnpj"/> is not a valid CNPJ.</exception>
     public Cnpj(string cnpj)
     {
         if (string.IsNullOrWhiteSpace(cnpj))
         {
-            throw new ArgumentNullException(nameof(cnpj), "CNPJ cannot be empty.");
+            throw new BadDocumentException(cnpj, DocumentType.Cnpj);
         }
 
         // Sample: 20.913.792/0001-01 or L3.ZHM.RO3/VI7K-43
         cnpj = cnpj.Trim();
-        if (cnpj.Length > 18)
+        if (cnpj.Length > MaxInputLength)
         {
             throw new BadDocumentException(cnpj, DocumentType.Cnpj);
         }
 
-        if (!CnpjHelper.Validate(cnpj))
+        if (!Validate(cnpj))
         {
             throw new BadDocumentException(cnpj, DocumentType.Cnpj);
         }
@@ -199,7 +205,7 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>
     /// <returns><c>true</c> if the CNPJ is valid; otherwise, <c>false</c>.</returns>
     public static bool IsValid(string? cnpj)
     {
-        return CnpjHelper.Validate(cnpj);
+        return Validate(cnpj);
     }
 
     /// <summary>
@@ -255,8 +261,20 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>
     /// <exception cref="ArgumentException">Thrown when <paramref name="initialDigits"/> is invalid.</exception>
     public static byte GetDigits(string initialDigits)
     {
-        var cnpj = CnpjHelper.Create(initialDigits);
-        return cnpj.Digits;
+        var (_, digits) = CreateCore(initialDigits);
+        return digits;
+    }
+
+    /// <summary>
+    /// Creates a CNPJ from the first 12 characters (root + branch), calculating the check digits.
+    /// </summary>
+    /// <param name="rootAndBranch">The first 12 characters of the CNPJ (alphanumeric, punctuation ignored).</param>
+    /// <returns>A valid <see cref="Cnpj"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="rootAndBranch"/> is null or whitespace.</exception>
+    public static Cnpj Create(string rootAndBranch)
+    {
+        var (cnpj, _) = CreateCore(rootAndBranch);
+        return new Cnpj(cnpj, skipValidation: true);
     }
 
     /// <summary>
@@ -269,8 +287,189 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>
     /// <exception cref="ArgumentException">Thrown when <paramref name="root"/> or <paramref name="branch"/> is invalid.</exception>
     public static Cnpj Create(string root, string branch)
     {
-        var (cnpj, _) = CnpjHelper.Create(root, branch);
+        var (cnpj, _) = CreateCore(root, branch);
         return new Cnpj(cnpj, skipValidation: true);
+    }
+
+    private static bool Validate(string? cnpj)
+    {
+        if (string.IsNullOrWhiteSpace(cnpj) || cnpj!.Length > MaxInputLength || cnpj.Length < 7)
+            return false;
+
+        var validChars = 0;
+        foreach (var c in cnpj)
+        {
+            if (IsValidInput(c))
+            {
+                validChars++;
+            }
+        }
+
+        if (validChars is < 7 or > 14)
+        {
+            return false;
+        }
+
+        var position = 0;
+        var totalDigit1 = 0;
+        var totalDigit2 = 0;
+
+        if (validChars < 14)
+        {
+            position = 14 - validChars;
+        }
+
+        foreach (var c in cnpj)
+        {
+            if (!IsValidInput(c)) continue;
+
+            var digit = c - '0';
+            if (digit > 42)
+            {
+                digit -= 32;
+            }
+
+            switch (position)
+            {
+                case < 12:
+                    totalDigit1 += digit * Multiplier1[position];
+                    totalDigit2 += digit * Multiplier2[position];
+                    break;
+                case 12:
+                {
+                    var dv1 = totalDigit1 % 11;
+                    dv1 = dv1 < 2 ? 0 : 11 - dv1;
+                    if (digit != dv1)
+                        return false;
+                    totalDigit2 += dv1 * Multiplier2[12];
+                    break;
+                }
+                case 13:
+                {
+                    var dv2 = totalDigit2 % 11;
+                    dv2 = dv2 < 2 ? 0 : 11 - dv2;
+                    if (digit != dv2)
+                        return false;
+                    break;
+                }
+            }
+
+            position++;
+
+            if (position == 14)
+                break;
+        }
+
+        return position == 14;
+    }
+
+    private static (string Cnpj, byte Digits) CreateCore(string rootAndBranch)
+    {
+        if (string.IsNullOrWhiteSpace(rootAndBranch))
+            throw new ArgumentNullException(nameof(rootAndBranch));
+
+        rootAndBranch = rootAndBranch.ToUpperInvariant();
+        rootAndBranch = new string(rootAndBranch.Where(char.IsLetterOrDigit).Take(12).ToArray());
+        rootAndBranch = rootAndBranch.PadLeft(12, '0');
+
+        return CreateCore(rootAndBranch.Substring(0, 8), rootAndBranch.Substring(8, 4));
+    }
+
+    private static (string Cnpj, byte Digits) CreateCore(string root, string branch)
+    {
+        if (string.IsNullOrWhiteSpace(root))
+            throw new ArgumentNullException(nameof(root));
+        if (string.IsNullOrWhiteSpace(branch))
+            throw new ArgumentNullException(nameof(branch));
+        if (root.Length > 8)
+            throw new ArgumentException("Root must have at most 8 characters.", nameof(root));
+        if (branch.Length > 4)
+            throw new ArgumentException("Branch must have at most 4 characters.", nameof(branch));
+
+        foreach (var c in root)
+        {
+            if (!IsValidInput(c))
+                throw new ArgumentException("Root must contain only digits and letters.", nameof(root));
+        }
+
+        foreach (var c in branch)
+        {
+            if (!IsValidInput(c))
+                throw new ArgumentException("Branch must contain only digits and letters.", nameof(branch));
+        }
+
+        root = NormalizeInput(root, 8);
+        branch = NormalizeInput(branch, 4);
+
+        var baseCnpj = root + branch;
+
+        var total1 = 0;
+        var total2 = 0;
+        for (var pos = 0; pos < 12; pos++)
+        {
+            var digit = baseCnpj[pos] - '0';
+            total1 += digit * Multiplier1[pos];
+            total2 += digit * Multiplier2[pos];
+        }
+
+        var dv1 = total1 % 11;
+        dv1 = dv1 < 2 ? 0 : 11 - dv1;
+        total2 += dv1 * Multiplier2[12];
+        var dv2 = total2 % 11;
+        dv2 = dv2 < 2 ? 0 : 11 - dv2;
+
+        var sb = new StringBuilder(14);
+        sb.Append(baseCnpj);
+        sb.Append(dv1);
+        sb.Append(dv2);
+        var cnpjComplete = sb.ToString();
+
+        var packedDigits = (byte)(dv1 * 10 + dv2);
+        return (cnpjComplete, packedDigits);
+    }
+
+    private static string NormalizeInput(string input, int length)
+    {
+        if (input.Length == length && !ContainsLowerCase(input))
+            return input;
+
+        var result = new char[length];
+
+        var padCount = length - input.Length;
+        for (var i = 0; i < padCount; i++)
+            result[i] = '0';
+
+        for (var i = 0; i < input.Length; i++)
+        {
+            var c = input[i];
+            if (c is >= 'a' and <= 'z')
+                c = (char)(c - 32);
+
+            result[padCount + i] = c;
+        }
+
+        return new string(result);
+    }
+
+    private static bool ContainsLowerCase(string s)
+    {
+        foreach (var c in s)
+        {
+            if (c is >= 'a' and <= 'z')
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsValidInput(char c)
+    {
+        return c switch
+        {
+            >= '0' and <= '9' => true,
+            '.' or '/' or '-' or ',' or ';' or '\\' => false,
+            _ => c is >= 'A' and <= 'Z' or >= 'a' and <= 'z'
+        };
     }
 
     /// <summary>

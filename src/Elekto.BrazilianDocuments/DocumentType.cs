@@ -1,7 +1,7 @@
 namespace Elekto.BrazilianDocuments;
 
 /// <summary>
-/// Indicates which document type caused a <see cref="BadDocumentException"/>.
+/// Indicates the type of document.
 /// </summary>
 public enum DocumentType
 {

@@ -24,7 +24,7 @@ namespace Elekto.BrazilianDocuments;
 /// var cpf = Cpf.Parse("123.456.789-09");
 ///
 /// // Create a CPF with check digit calculation
-/// var cpf = Cpf.NewCpf(123456789);
+/// var cpf = Cpf.Create(123456789);
 ///
 /// // Validate a CPF
 /// bool isValid = Cpf.IsValid("123.456.789-09");
@@ -237,14 +237,14 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>
     /// <param name="initialDigits">The first 9 digits as a string.</param>
     /// <returns>A valid <see cref="Cpf"/>.</returns>
     /// <exception cref="BadDocumentException">Thrown when <paramref name="initialDigits"/> is invalid.</exception>
-    public static Cpf NewCpf(string initialDigits)
+    public static Cpf Create(string initialDigits)
     {
         if (!TryConvertToNumber(initialDigits, out var number))
         {
             throw new BadDocumentException(initialDigits, DocumentType.Cpf);
         }
 
-        return NewCpf(number);
+        return Create(number);
     }
 
     /// <summary>
@@ -253,7 +253,7 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>
     /// <param name="initialDigits">The first 9 digits as a number.</param>
     /// <returns>A valid <see cref="Cpf"/>.</returns>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when <paramref name="initialDigits"/> is out of range.</exception>
-    public static Cpf NewCpf(long initialDigits)
+    public static Cpf Create(long initialDigits)
     {
         if (initialDigits < 0)
             throw new ArgumentOutOfRangeException(nameof(initialDigits), initialDigits, "Must be greater than or equal to zero.");
@@ -376,7 +376,7 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>
         {
             if (c is >= '0' and <= '9')
                 digitCount++;
-            else if (c is not '.' and not '-')
+            else if (c is not '.' and not '-' and not ',' and not ';' and not '\\')
                 return false; // Invalid character
         }
 
@@ -401,7 +401,7 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>
     {
         foreach (var c in s)
         {
-            if (c is '.' or '-')
+            if (c is '.' or '-' or ',' or ';' or '\\')
                 return true;
         }
         return false;

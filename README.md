@@ -46,6 +46,9 @@ if (Cnpj.TryParse("ELEKTO000140", out var parsed))
 var newCnpj = Cnpj.Create("ELEKTO", "0001");
 Console.WriteLine(newCnpj.ToString("B")); // 00ELEKTO000140
 
+// Create from 12-character base (root + branch)
+var cnpjFromBase = Cnpj.Create("ELEKTO0001");
+
 // Access parts
 Console.WriteLine(cnpj.Root);        // First 8 characters
 Console.WriteLine(cnpj.Branch);      // Characters 9-12 (branch/order)
@@ -70,7 +73,7 @@ if (Cpf.IsValid("123.456.789-09"))
 }
 
 // Create with automatic check digit calculation
-var newCpf = Cpf.NewCpf(123456789L);
+var newCpf = Cpf.Create(123456789L);
 Console.WriteLine(newCpf.ToString("G")); // 123.456.789-09
 
 // Convert to numeric value

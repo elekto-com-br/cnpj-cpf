@@ -10,7 +10,10 @@ public class CpfTests
     private static readonly string[] ValidCpfs =
     [
         "123.456.789-09",
+        "123,456,,78909",   // Using different punctuation
         "12345678909",
+        "1,23456,7890,9",    // Using different punctuation
+        "1234.56,7890.9",    // Using different punctuation
         "987.654.321-00",
         "98765432100",
         "111.222.333-96",
@@ -23,28 +26,30 @@ public class CpfTests
     private static readonly string[] InvalidCpfs =
     [
         "123.456.789-00",      // Wrong check digit
+        "123,456.789-00",      // Wrong check digit with different punctuation
         "12345678900",         // Wrong check digit
         "123456789012",        // Too many digits (12)
         "",
         "   ",
         "abc.def.ghi-jk",
         "12.345.678-90a",
+        "12,345,678-90a",
     ];
 
     [Test]
-    public void NewCpf_WithKnownValues_ShouldCalculateCorrectCheckDigits()
+    public void Create_WithKnownValues_ShouldCalculateCorrectCheckDigits()
     {
         // Test cases from the original implementation
-        Assert.That(Cpf.NewCpf(123_456_789L).ToString("G"), Is.EqualTo("123.456.789-09"));
-        Assert.That(Cpf.NewCpf(987_654_321L).ToString("G"), Is.EqualTo("987.654.321-00"));
-        Assert.That(Cpf.NewCpf(111_222_333L).ToString("G"), Is.EqualTo("111.222.333-96"));
-        Assert.That(Cpf.NewCpf(999_888_777L).ToString("G"), Is.EqualTo("999.888.777-14"));
+        Assert.That(Cpf.Create(123_456_789L).ToString("G"), Is.EqualTo("123.456.789-09"));
+        Assert.That(Cpf.Create(987_654_321L).ToString("G"), Is.EqualTo("987.654.321-00"));
+        Assert.That(Cpf.Create(111_222_333L).ToString("G"), Is.EqualTo("111.222.333-96"));
+        Assert.That(Cpf.Create(999_888_777L).ToString("G"), Is.EqualTo("999.888.777-14"));
     }
 
     [Test]
-    public void NewCpf_FromString_ShouldWork()
+    public void Create_FromString_ShouldWork()
     {
-        var cpf = Cpf.NewCpf("123456789");
+        var cpf = Cpf.Create("123456789");
         Assert.That(cpf.ToString("G"), Is.EqualTo("123.456.789-09"));
     }
 
@@ -348,16 +353,16 @@ public class CpfTests
     }
 
     [Test]
-    public void NewCpf_WithNegativeValue_ShouldThrowArgumentOutOfRangeException()
+    public void Create_WithNegativeValue_ShouldThrowArgumentOutOfRangeException()
     {
-        Assert.That(() => Cpf.NewCpf(-1L),
+        Assert.That(() => Cpf.Create(-1L),
             Throws.TypeOf<ArgumentOutOfRangeException>());
     }
 
     [Test]
-    public void NewCpf_WithTooLargeValue_ShouldThrowArgumentOutOfRangeException()
+    public void Create_WithTooLargeValue_ShouldThrowArgumentOutOfRangeException()
     {
-        Assert.That(() => Cpf.NewCpf(1_000_000_000L),
+        Assert.That(() => Cpf.Create(1_000_000_000L),
             Throws.TypeOf<ArgumentOutOfRangeException>());
     }
 
@@ -387,9 +392,9 @@ public class CpfTests
     }
     
     [Test]
-    public void NewCpf_WithNonNumericString_ShouldThrowBadDocumentException()
+    public void Create_WithNonNumericString_ShouldThrowBadDocumentException()
     {
-        Assert.That(() => Cpf.NewCpf("no-cpf"),
+        Assert.That(() => Cpf.Create("no-cpf"),
             Throws.TypeOf<BadDocumentException>()
                 .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cpf));
     }

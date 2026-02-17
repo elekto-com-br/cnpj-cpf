@@ -10,11 +10,17 @@ public class CnpjTests
     private static readonly string[] ValidCnpjs =
     [
         "21.552.200/0001-27",
+        "21,552,200/0001=27",     // Using different punctuation
         "98.503.200/0001-61",
         "48.465.264/0001-47",
+        "48.465,264,0001,47",     // Using different punctuation
         "86.674.875/0001-94",
         "03.536.783/0001-10",
         "03536783-0001/10",
+        "0353.6783-0001/10",      // Bad placed puntuation
+        "353,67,83-0001/10",      // Multiple punctuation
+        "353,67,83;0001/10",      // Multiple punctuation
+        "353;67.83;0001\\10",      // Multiple punctuation
         "3.536.783/0001-10",
         "3536783000110",
         "12.ABC.345/01DE-35",      // Alphanumeric with punctuation
@@ -40,6 +46,7 @@ public class CnpjTests
     [
         "12345678901234",          // Invalid check digits
         "21.552.200/0001-28",      // Wrong check digit
+        "21,552.200/0001,28",      // Wrong check digit
         "12.345.678/0001-0",       // Too few digits
         "",
         "   ",
@@ -67,11 +74,14 @@ public class CnpjTests
     }
 
     [Test]
-    public void Constructor_WithNullOrEmpty_ShouldThrowException()
+    public void Constructor_WithNullOrEmpty_ShouldThrowBadDocumentException()
     {
-        Assert.That(() => new Cnpj(null!), Throws.TypeOf<ArgumentNullException>());
-        Assert.That(() => new Cnpj(""), Throws.TypeOf<ArgumentNullException>());
-        Assert.That(() => new Cnpj("   "), Throws.TypeOf<ArgumentNullException>());
+        Assert.That(() => new Cnpj(null!), Throws.TypeOf<BadDocumentException>()
+            .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cnpj));
+        Assert.That(() => new Cnpj(""), Throws.TypeOf<BadDocumentException>()
+            .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cnpj));
+        Assert.That(() => new Cnpj("   "), Throws.TypeOf<BadDocumentException>()
+            .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cnpj));
     }
 
     [Test]
