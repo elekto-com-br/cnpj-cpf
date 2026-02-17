@@ -53,12 +53,12 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>
     /// Initializes a new instance of the <see cref="Cpf"/> struct from a string.
     /// </summary>
     /// <param name="cpf">The CPF string to parse.</param>
-    /// <exception cref="BadCpfException">Thrown when <paramref name="cpf"/> is not a valid CPF.</exception>
+    /// <exception cref="BadDocumentException">Thrown when <paramref name="cpf"/> is not a valid CPF.</exception>
     public Cpf(string cpf)
     {
         if (!TryConvertToNumber(cpf, out var number) || !IsValidNumber(number))
         {
-            throw new BadCpfException(cpf);
+            throw new BadDocumentException(cpf, DocumentType.Cpf);
         }
 
         _cpf = number;
@@ -68,12 +68,12 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>
     /// Initializes a new instance of the <see cref="Cpf"/> struct from a numeric value.
     /// </summary>
     /// <param name="cpf">The CPF as a numeric value.</param>
-    /// <exception cref="BadCpfException">Thrown when <paramref name="cpf"/> is not a valid CPF.</exception>
+    /// <exception cref="BadDocumentException">Thrown when <paramref name="cpf"/> is not a valid CPF.</exception>
     public Cpf(long cpf)
     {
         if (!IsValidNumber(cpf))
         {
-            throw new BadCpfException(cpf.ToString());
+            throw new BadDocumentException(cpf.ToString(), DocumentType.Cpf);
         }
         _cpf = cpf;
     }
@@ -236,12 +236,12 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>
     /// </summary>
     /// <param name="initialDigits">The first 9 digits as a string.</param>
     /// <returns>A valid <see cref="Cpf"/>.</returns>
-    /// <exception cref="BadCpfException">Thrown when <paramref name="initialDigits"/> is invalid.</exception>
+    /// <exception cref="BadDocumentException">Thrown when <paramref name="initialDigits"/> is invalid.</exception>
     public static Cpf NewCpf(string initialDigits)
     {
         if (!TryConvertToNumber(initialDigits, out var number))
         {
-            throw new BadCpfException(initialDigits);
+            throw new BadDocumentException(initialDigits, DocumentType.Cpf);
         }
 
         return NewCpf(number);
@@ -269,12 +269,12 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>
     /// </summary>
     /// <param name="input">The input string to parse.</param>
     /// <returns>A valid <see cref="Cpf"/>.</returns>
-    /// <exception cref="BadCpfException">Thrown when <paramref name="input"/> is not a valid CPF.</exception>
+    /// <exception cref="BadDocumentException">Thrown when <paramref name="input"/> is not a valid CPF.</exception>
     public static Cpf Parse(string input)
     {
         if (!TryParse(input, out var cpf))
         {
-            throw new BadCpfException(input);
+            throw new BadDocumentException(input, DocumentType.Cpf);
         }
         return cpf;
     }
@@ -312,12 +312,12 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>
     /// </summary>
     /// <param name="input">The numeric value to parse.</param>
     /// <returns>A valid <see cref="Cpf"/>.</returns>
-    /// <exception cref="BadCpfException">Thrown when <paramref name="input"/> is not a valid CPF.</exception>
+    /// <exception cref="BadDocumentException">Thrown when <paramref name="input"/> is not a valid CPF.</exception>
     public static Cpf Parse(long input)
     {
         if (!TryParse(input, out var cpf))
         {
-            throw new BadCpfException(input.ToString());
+            throw new BadDocumentException(input.ToString(), DocumentType.Cpf);
         }
         return cpf;
     }
@@ -492,7 +492,7 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>
     /// </summary>
     /// <param name="cpf">The CPF string.</param>
     /// <returns>A <see cref="Cpf"/> if valid; otherwise, <c>null</c> for null or empty input.</returns>
-    /// <exception cref="BadCpfException">Thrown when <paramref name="cpf"/> is not null/empty but is invalid.</exception>
+    /// <exception cref="BadDocumentException">Thrown when <paramref name="cpf"/> is not null/empty but is invalid.</exception>
     public static implicit operator Cpf?(string? cpf)
     {
         if (string.IsNullOrEmpty(cpf)) return null;

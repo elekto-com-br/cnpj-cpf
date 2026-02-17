@@ -60,10 +60,11 @@ public class CpfTests
     }
 
     [Test]
-    public void Constructor_WithInvalidCpfString_ShouldThrowBadCpfException()
+    public void Constructor_WithInvalidCpfString_ShouldThrowBadDocumentException()
     {
         Assert.That(() => new Cpf("12345678900"),
-            Throws.TypeOf<BadCpfException>());
+            Throws.TypeOf<BadDocumentException>()
+                .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cpf));
     }
 
     [Test]
@@ -74,10 +75,11 @@ public class CpfTests
     }
 
     [Test]
-    public void Constructor_WithInvalidLong_ShouldThrowBadCpfException()
+    public void Constructor_WithInvalidLong_ShouldThrowBadDocumentException()
     {
         Assert.That(() => new Cpf(12345678900L),
-            Throws.TypeOf<BadCpfException>());
+            Throws.TypeOf<BadDocumentException>()
+                .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cpf));
     }
 
     [Test]
@@ -135,10 +137,11 @@ public class CpfTests
     }
 
     [Test]
-    public void Parse_WithInvalidCpf_ShouldThrowBadCpfException()
+    public void Parse_WithInvalidCpf_ShouldThrowBadDocumentException()
     {
         Assert.That(() => Cpf.Parse("invalid"),
-            Throws.TypeOf<BadCpfException>());
+            Throws.TypeOf<BadDocumentException>()
+                .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cpf));
     }
 
     [Test]
@@ -384,18 +387,20 @@ public class CpfTests
     }
     
     [Test]
-    public void NewCpf_WithNonNumericString_ShouldThrowBadCpfException()
+    public void NewCpf_WithNonNumericString_ShouldThrowBadDocumentException()
     {
         Assert.That(() => Cpf.NewCpf("no-cpf"),
-            Throws.TypeOf<BadCpfException>());
+            Throws.TypeOf<BadDocumentException>()
+                .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cpf));
     }
 
     [Test]
-    public void Parse_Long_WithInvalidValue_ShouldThrowBadCpfException()
+    public void Parse_Long_WithInvalidValue_ShouldThrowBadDocumentException()
     {
         // 12345678900 is invalid checksum
         Assert.That(() => Cpf.Parse(12345678900L),
-            Throws.TypeOf<BadCpfException>());
+            Throws.TypeOf<BadDocumentException>()
+                .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cpf));
     }
 
     [Test]
@@ -434,12 +439,13 @@ public class CpfTests
     }
 
     [Test]
-    public void ImplicitOperator_WithInvalidString_ShouldThrowBadCpfException()
+    public void ImplicitOperator_WithInvalidString_ShouldThrowBadDocumentException()
     {
         Assert.That(() =>
         {
             Cpf? c = "invalid-cpf";
-        }, Throws.TypeOf<BadCpfException>());
+        }, Throws.TypeOf<BadDocumentException>()
+            .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cpf));
     }
 
     [Test]

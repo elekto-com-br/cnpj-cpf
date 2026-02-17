@@ -59,10 +59,11 @@ public class CnpjTests
     }
 
     [Test]
-    public void Constructor_WithInvalidCnpjString_ShouldThrowBadCnpjException()
+    public void Constructor_WithInvalidCnpjString_ShouldThrowBadDocumentException()
     {
         Assert.That(() => new Cnpj("12345678901234"),
-            Throws.TypeOf<BadCnpjException>());
+            Throws.TypeOf<BadDocumentException>()
+                .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cnpj));
     }
 
     [Test]
@@ -107,10 +108,11 @@ public class CnpjTests
     }
 
     [Test]
-    public void Parse_WithInvalidCnpj_ShouldThrowBadCnpjException()
+    public void Parse_WithInvalidCnpj_ShouldThrowBadDocumentException()
     {
         Assert.That(() => Cnpj.Parse("invalid"),
-            Throws.TypeOf<BadCnpjException>());
+            Throws.TypeOf<BadDocumentException>()
+                .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cnpj));
     }
 
     [Test]
@@ -375,10 +377,11 @@ public class CnpjTests
     }
 
     [Test]
-    public void Constructor_WithInputTooLong_ShouldThrowBadCnpjException()
+    public void Constructor_WithInputTooLong_ShouldThrowBadDocumentException()
     {
         var longString = new string('1', 20);
-        Assert.That(() => new Cnpj(longString), Throws.TypeOf<BadCnpjException>());
+        Assert.That(() => new Cnpj(longString), Throws.TypeOf<BadDocumentException>()
+            .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cnpj));
     }
 
     [Test]
@@ -410,9 +413,10 @@ public class CnpjTests
     }
 
     [Test]
-    public void ImplicitOperator_WithInvalidString_ShouldThrowBadCnpjException()
+    public void ImplicitOperator_WithInvalidString_ShouldThrowBadDocumentException()
     {
-        Assert.That(() => { Cnpj? c = "invalid-cnpj"; }, Throws.TypeOf<BadCnpjException>());
+        Assert.That(() => { Cnpj? c = "invalid-cnpj"; }, Throws.TypeOf<BadDocumentException>()
+            .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cnpj));
     }
 
     [Test]

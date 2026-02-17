@@ -77,6 +77,34 @@ Console.WriteLine(newCpf.ToString("G")); // 123.456.789-09
 long value = cpf.ToLong(); // 12345678909
 ```
 
+## Error Handling
+
+When parsing or constructing invalid documents, the library throws a unified exception:
+
+- BadDocumentException: for both CPF and CNPJ invalid inputs
+- DocumentType: indicates which document triggered the exception (Cpf, Cnpj, Unknown)
+
+```csharp
+try
+{
+    var cpf = Cpf.Parse("invalid");
+}
+catch (BadDocumentException ex) when (ex.SourceType == DocumentType.Cpf)
+{
+    Console.WriteLine(ex.Message);
+    Console.WriteLine(ex.InvalidDocument);
+}
+
+try
+{
+    var cnpj = Cnpj.Parse("invalid");
+}
+catch (BadDocumentException ex) when (ex.SourceType == DocumentType.Cnpj)
+{
+    Console.WriteLine(ex.Message);
+}
+```
+
 ## Format Specifiers
 
 ### CNPJ Formats

@@ -59,7 +59,7 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>
     /// </summary>
     /// <param name="cnpj">The CNPJ string to parse.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="cnpj"/> is null or whitespace.</exception>
-    /// <exception cref="BadCnpjException">Thrown when <paramref name="cnpj"/> is not a valid CNPJ.</exception>
+    /// <exception cref="BadDocumentException">Thrown when <paramref name="cnpj"/> is not a valid CNPJ.</exception>
     public Cnpj(string cnpj)
     {
         if (string.IsNullOrWhiteSpace(cnpj))
@@ -71,12 +71,12 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>
         cnpj = cnpj.Trim();
         if (cnpj.Length > 18)
         {
-            throw new BadCnpjException(cnpj);
+            throw new BadDocumentException(cnpj, DocumentType.Cnpj);
         }
 
         if (!CnpjHelper.Validate(cnpj))
         {
-            throw new BadCnpjException(cnpj);
+            throw new BadDocumentException(cnpj, DocumentType.Cnpj);
         }
 
         _cnpj = CleanAndNormalize(cnpj);
@@ -207,12 +207,12 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>
     /// </summary>
     /// <param name="input">The input string to parse.</param>
     /// <returns>A valid <see cref="Cnpj"/>.</returns>
-    /// <exception cref="BadCnpjException">Thrown when <paramref name="input"/> is not a valid CNPJ.</exception>
+    /// <exception cref="BadDocumentException">Thrown when <paramref name="input"/> is not a valid CNPJ.</exception>
     public static Cnpj Parse(string input)
     {
         if (!TryParse(input, out var cnpj))
         {
-            throw new BadCnpjException(input);
+            throw new BadDocumentException(input, DocumentType.Cnpj);
         }
 
         return cnpj;
@@ -346,7 +346,7 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>
     /// </summary>
     /// <param name="cnpj">The CNPJ string.</param>
     /// <returns>A <see cref="Cnpj"/> if valid; otherwise, <c>null</c> for null or empty input.</returns>
-    /// <exception cref="BadCnpjException">Thrown when <paramref name="cnpj"/> is not null/empty but is invalid.</exception>
+    /// <exception cref="BadDocumentException">Thrown when <paramref name="cnpj"/> is not null/empty but is invalid.</exception>
     public static implicit operator Cnpj?(string? cnpj)
     {
         if (string.IsNullOrEmpty(cnpj)) return null;
