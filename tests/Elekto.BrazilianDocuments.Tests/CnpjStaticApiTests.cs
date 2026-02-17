@@ -272,17 +272,24 @@ public class CnpjStaticApiTests
             Assert.That(() => Cnpj.Create("12.3", "0001"), Throws.ArgumentException);
     }
 
-    [Test]
-    public void Performance_Validation_ShouldBeEfficient()
+    private class TestCnpj
     {
-        const double probAlpha = 0.2;
-        const double probTrimStart = 0.5;
-        const double probError = 0.1;
+        public string Cnpj { get; set; } = null!;
+        public bool IsValid { get; set; }   
+        public string ValidCnpj { get; set; } = null!;
+        public bool? IsValidResult { get; set; } = null;
+        
+    }
 
-        var rand = new Random(69);
-        const int numToCreate = 1_000_000;
-
-        var all = new (string cnpj, bool isValid, string validCnpj)[numToCreate];
+    [TestCase(0.2, 0.0, 0.0, 100_000, true)]
+    [TestCase(0.2, 0.5, 1.0, 100_000, true)]
+    [TestCase(0.2, 0.5, 0.0, 100_000, true)]
+    [TestCase(0.2, 0.5, 0.1, 100_000, true)]
+    public void Performance_Validation_ShouldBeEfficient(double probAlpha, double probTrimStart, double probError, int numToCreate, bool assertGc)
+    {
+                
+        var rand = new Random(69);        
+        var all = new TestCnpj[numToCreate];
 
         var sw = new System.Diagnostics.Stopwatch();
 
@@ -322,35 +329,60 @@ public class CnpjStaticApiTests
                 }
             }
 
-            all[i] = (cnpj, !isError, validCnpj);
+            all[i] = new TestCnpj
+            {
+                Cnpj = cnpj,
+                IsValid = Cnpj.IsValid(cnpj),
+                ValidCnpj = validCnpj                
+            };
         }
 
         Console.WriteLine($"Creation total: {numToCreate:N0} in {sw.Elapsed:g}");
-        Console.WriteLine($"Creation: {(numToCreate / sw.Elapsed.TotalSeconds):N0} c/s");
+        Console.WriteLine($"Probability of alpha chars: {probAlpha:P0}");
+        Console.WriteLine($"Probability of trimming leading zero: {probTrimStart:P0}");
+        Console.WriteLine($"Probability of introducing error: {probError:P0}");
+        Console.WriteLine($"Creation: {numToCreate / sw.Elapsed.TotalSeconds:N0} c/s");
 
         sw.Reset();
 
-        var before2 = GC.CollectionCount(2);
-        var before1 = GC.CollectionCount(1);
-        var before0 = GC.CollectionCount(0);
+        // Force GC to collect all garbage from setup phase
+        GC.Collect(2, GCCollectionMode.Forced, blocking: true);
+        GC.WaitForPendingFinalizers();
+        GC.Collect(2, GCCollectionMode.Forced, blocking: true);
+
+        // Use thread-specific allocation tracking (GC.CollectionCount is process-wide
+        // and captures GC triggered by other threads like NUnit adapter, test runner, etc.)
+        var allocBefore = GC.GetAllocatedBytesForCurrentThread();
 
         // Validate all
+        sw.Start();
         for (var i = 0; i < numToCreate; i++)
-        {
-            sw.Start();
-            var isValid = Cnpj.IsValid(all[i].cnpj);
-            sw.Stop();
-
-            Assert.That(isValid, Is.EqualTo(all[i].isValid),
-                $"CNPJ {i:N0} '{all[i].cnpj}' (original {all[i].validCnpj}) should be {(all[i].isValid ? "valid" : "invalid")}.");
+        {            
+            all[i].IsValidResult = Cnpj.IsValid(all[i].Cnpj);            
         }
+        sw.Stop();
 
-        Console.WriteLine($"GC Gen #2  : {GC.CollectionCount(2) - before2}");
-        Console.WriteLine($"GC Gen #1  : {GC.CollectionCount(1) - before1}");
-        Console.WriteLine($"GC Gen #0  : {GC.CollectionCount(0) - before0}");
+        var allocAfter = GC.GetAllocatedBytesForCurrentThread();
+        var allocatedBytes = allocAfter - allocBefore;
 
         Console.WriteLine($"Validation total: {numToCreate:N0} in {sw.Elapsed:g}");
-        Console.WriteLine($"Validation: {(numToCreate / sw.Elapsed.TotalSeconds):N0} v/s");
+        Console.WriteLine($"Validation: {numToCreate / sw.Elapsed.TotalSeconds:N0} v/s");
+        Console.WriteLine($"Allocated bytes: {allocatedBytes:N0}");
+
+        // Assert all
+        for (var i = 0; i < numToCreate; i++)
+        {
+            Assert.That(all[i].IsValidResult, Is.EqualTo(all[i].IsValid),
+                $"CNPJ {i:N0} '{all[i].Cnpj}' (original {all[i].ValidCnpj}) should be {(all[i].IsValid ? "valid" : "invalid")}.");
+        }
+
+        if (assertGc)
+        {
+            Assert.That(allocatedBytes, Is.EqualTo(0),
+                $"Cnpj.IsValid should be zero-allocation, but {allocatedBytes:N0} bytes were allocated in {numToCreate:N0} calls.");
+        }
+
+        
     }
 
     private static (string root, string branch) CreateRandom(Random rand, bool useAlpha)

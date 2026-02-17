@@ -474,52 +474,109 @@ public class CpfTests
         Assert.That(Cpf.IsValid("12345.67890"), Is.True);
     }
 
-    [Test]
-    public void Performance_Validation_ShouldBeEfficient()
+    private class TestCpf
+    {
+        public string Cpf { get; set; } = null!;
+        public bool IsValid { get; set; }
+        public string ValidCpf { get; set; } = null!;
+        public bool? IsValidResult { get; set; } = null;
+    }
+
+    [TestCase(0.0, 0.0, 100_000, true)]
+    [TestCase(0.5, 1.0, 100_000, true)]
+    [TestCase(0.5, 0.0, 100_000, true)]
+    [TestCase(0.5, 0.1, 100_000, true)]
+    public void Performance_Validation_ShouldBeEfficient(double probTrimStart, double probError, int numToCreate, bool assertGc)
     {
         var rand = new Random(42);
-        const int numIterations = 3_000_000;
+        var all = new TestCpf[numToCreate];
+
+        var sw = new System.Diagnostics.Stopwatch();
 
         // Create test data
-        var testData = new (long cpf, bool expectedValid)[numIterations];
-        for (var i = 0; i < numIterations; i++)
+        for (var i = 0; i < numToCreate; i++)
         {
             var initial = rand.NextInt64(0, 999_999_999);
             var digits = Cpf.GetDigits(initial);
             var fullCpf = initial * 100 + digits;
 
-            // Introduce some invalid CPFs
-            if (rand.NextDouble() < 0.1)
+            sw.Start();
+            var cpfStr = fullCpf.ToString("00000000000");
+            sw.Stop();
+            var validCpf = cpfStr;
+
+            var shouldTrimZero = cpfStr.StartsWith("0") && cpfStr.Length > 1 && rand.NextDouble() <= probTrimStart;
+            if (shouldTrimZero)
             {
-                fullCpf = (fullCpf + 1) % 100_000_000_000; // Corrupt it
-                testData[i] = (fullCpf, false);
+                cpfStr = cpfStr.TrimStart('0');
             }
-            else
+
+            var isError = rand.NextDouble() <= probError;
+            if (isError)
             {
-                testData[i] = (fullCpf, true);
+                var posError = rand.Next(cpfStr.Length);
+                var original = cpfStr[posError];
+                var substitute = (char)(original == '9' ? '0' : original + 1);
+
+                cpfStr = cpfStr.Substring(0, posError) + substitute + cpfStr.Substring(posError + 1);
+
+                if (substitute == '0' && cpfStr.EndsWith("00"))
+                {
+                    cpfStr = validCpf.Substring(0, 9) + "99";
+                }
             }
+
+            all[i] = new TestCpf
+            {
+                Cpf = cpfStr,
+                IsValid = Cpf.IsValid(cpfStr),
+                ValidCpf = validCpf
+            };
         }
 
-        var sw = new System.Diagnostics.Stopwatch();
+        Console.WriteLine($"Creation total: {numToCreate:N0} in {sw.Elapsed:g}");
+        Console.WriteLine($"Probability of trimming leading zero: {probTrimStart:P0}");
+        Console.WriteLine($"Probability of introducing error: {probError:P0}");
+        Console.WriteLine($"Creation: {numToCreate / sw.Elapsed.TotalSeconds:N0} c/s");
 
-        var before2 = GC.CollectionCount(2);
-        var before1 = GC.CollectionCount(1);
-        var before0 = GC.CollectionCount(0);
+        sw.Reset();
 
+        // Force GC to collect all garbage from setup phase
+        GC.Collect(2, GCCollectionMode.Forced, blocking: true);
+        GC.WaitForPendingFinalizers();
+        GC.Collect(2, GCCollectionMode.Forced, blocking: true);
+
+        // Use thread-specific allocation tracking (GC.CollectionCount is process-wide
+        // and captures GC triggered by other threads like NUnit adapter, test runner, etc.)
+        var allocBefore = GC.GetAllocatedBytesForCurrentThread();
+
+        // Validate all
         sw.Start();
-        for (var i = 0; i < numIterations; i++)
+        for (var i = 0; i < numToCreate; i++)
         {
-            var isValid = Cpf.IsValid(testData[i].cpf);
-            // Don't assert in performance test to avoid overhead
+            all[i].IsValidResult = Cpf.IsValid(all[i].Cpf);
         }
         sw.Stop();
 
-        Console.WriteLine($"GC Gen #2  : {GC.CollectionCount(2) - before2}");
-        Console.WriteLine($"GC Gen #1  : {GC.CollectionCount(1) - before1}");
-        Console.WriteLine($"GC Gen #0  : {GC.CollectionCount(0) - before0}");
+        var allocAfter = GC.GetAllocatedBytesForCurrentThread();
+        var allocatedBytes = allocAfter - allocBefore;
 
-        Console.WriteLine($"Validation total: {numIterations:N0} in {sw.Elapsed:g}");
-        Console.WriteLine($"Validation: {(numIterations / sw.Elapsed.TotalSeconds):N0} v/s");
+        Console.WriteLine($"Validation total: {numToCreate:N0} in {sw.Elapsed:g}");
+        Console.WriteLine($"Validation: {numToCreate / sw.Elapsed.TotalSeconds:N0} v/s");
+        Console.WriteLine($"Allocated bytes: {allocatedBytes:N0}");
+
+        // Assert all
+        for (var i = 0; i < numToCreate; i++)
+        {
+            Assert.That(all[i].IsValidResult, Is.EqualTo(all[i].IsValid),
+                $"CPF {i:N0} '{all[i].Cpf}' (original {all[i].ValidCpf}) should be {(all[i].IsValid ? "valid" : "invalid")}.");
+        }
+
+        if (assertGc)
+        {
+            Assert.That(allocatedBytes, Is.EqualTo(0),
+                $"Cpf.IsValid should be zero-allocation, but {allocatedBytes:N0} bytes were allocated in {numToCreate:N0} calls.");
+        }
     }
 
     private class CpfContainer
