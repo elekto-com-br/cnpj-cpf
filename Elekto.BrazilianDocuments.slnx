@@ -1,4 +1,5 @@
 <Solution>
+  <Project Path="benchmarks/Elekto.BrazilianDocuments.Benchmarks/Elekto.BrazilianDocuments.Benchmarks.csproj" />
   <Project Path="src/Elekto.BrazilianDocuments/Elekto.BrazilianDocuments.csproj" />
   <Project Path="tests/Elekto.BrazilianDocuments.Tests/Elekto.BrazilianDocuments.Tests.csproj" />
 </Solution>

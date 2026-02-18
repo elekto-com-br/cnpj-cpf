@@ -217,15 +217,25 @@ var deserialized = JsonSerializer.Deserialize<Company>(json);
 
 ## Performance
 
-The validation algorithms are optimized for minimal memory allocation:
+Both types are engineered for high-throughput, zero-allocation validation — safe to call on hot paths without GC pressure.
 
-- **CNPJ validation**: Single-pass algorithm with zero heap allocation during validation
-- **CPF validation**: Uses numeric operations without string manipulation
-- **Check digit calculation**: Performed in a single loop for both digits
+| Document | Scenario | Throughput |
+|----------|----------|----------:|
+| CPF | Worst case (invalid check digit) | **~15.6 M/s** |
+| CPF | Mixed dataset (valid + invalid + trimmed) | **~22.9 M/s** |
+| CNPJ numeric | Worst case (invalid check digit) | **~5.3 M/s** |
+| CNPJ numeric | Mixed dataset (valid + invalid + trimmed) | **~9.1 M/s** |
+| CNPJ alphanumeric | New 2026 format (valid + invalid) | **~5.3 M/s** |
 
-Typical performance on modern hardware:
-- CNPJ validation: ~7,000,000+ validations/second
-- CPF validation: ~40,000,000+ validations/second
+> Measured on an Intel Xeon E-2146G @ 3.50 GHz · .NET 10.0.3 · BenchmarkDotNet 0.14.0.  
+> **Allocated: 0 bytes** across all scenarios — confirmed by `[MemoryDiagnoser]`.  
+> Reproduce with: `dotnet run -c Release --project benchmarks/Elekto.BrazilianDocuments.Benchmarks`
+
+Key design decisions behind the numbers:
+
+- **Zero heap allocation**: validation operates entirely on `ReadOnlySpan<char>` — no intermediate strings, arrays, or boxing
+- **Early exit**: length and character-class guards reject invalid inputs before any arithmetic is performed
+- **Compact storage**: `Cpf` stores the document as a single `long`; `Cnpj` as a pre-normalized 14-character string
 
 ## Credits
 
