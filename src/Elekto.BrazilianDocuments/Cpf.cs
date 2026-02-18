@@ -35,7 +35,7 @@ namespace Elekto.BrazilianDocuments;
 /// </code>
 /// </example>
 [JsonConverter(typeof(CpfJsonConverter))]
-public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>
+public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFormattable
 {
     /// <summary>
     /// A valid but empty CPF (all zeros).
@@ -59,6 +59,21 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>
         if (!TryConvertToNumber(cpf, out var number) || !IsValidNumber(number))
         {
             throw new BadDocumentException(cpf, DocumentType.Cpf);
+        }
+
+        _cpf = number;
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Cpf"/> struct from a span of characters.
+    /// </summary>
+    /// <param name="cpf">The CPF characters to parse.</param>
+    /// <exception cref="BadDocumentException">Thrown when <paramref name="cpf"/> is not a valid CPF.</exception>
+    public Cpf(ReadOnlySpan<char> cpf)
+    {
+        if (!TryConvertToNumber(cpf, out var number) || !IsValidNumber(number))
+        {
+            throw new BadDocumentException(new string(cpf.ToArray()), DocumentType.Cpf);
         }
 
         _cpf = number;
@@ -159,6 +174,20 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>
     /// <param name="cpf">The CPF string to validate.</param>
     /// <returns><c>true</c> if the CPF is valid; otherwise, <c>false</c>.</returns>
     public static bool IsValid(string? cpf)
+    {
+        if (!TryConvertToNumber(cpf, out var number))
+        {
+            return false;
+        }
+        return IsValidNumber(number);
+    }
+
+    /// <summary>
+    /// Determines whether the specified CPF span is valid.
+    /// </summary>
+    /// <param name="cpf">The CPF characters to validate.</param>
+    /// <returns><c>true</c> if the CPF is valid; otherwise, <c>false</c>.</returns>
+    public static bool IsValid(ReadOnlySpan<char> cpf)
     {
         if (!TryConvertToNumber(cpf, out var number))
         {
@@ -280,6 +309,21 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>
     }
 
     /// <summary>
+    /// Parses the specified input span into a <see cref="Cpf"/>.
+    /// </summary>
+    /// <param name="input">The input characters to parse.</param>
+    /// <returns>A valid <see cref="Cpf"/>.</returns>
+    /// <exception cref="BadDocumentException">Thrown when <paramref name="input"/> is not a valid CPF.</exception>
+    public static Cpf Parse(ReadOnlySpan<char> input)
+    {
+        if (!TryParse(input, out var cpf))
+        {
+            throw new BadDocumentException(new string(input.ToArray()), DocumentType.Cpf);
+        }
+        return cpf;
+    }
+
+    /// <summary>
     /// Tries to parse the specified input string into a <see cref="Cpf"/>.
     /// </summary>
     /// <param name="input">The input string to parse.</param>
@@ -297,11 +341,39 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>
     }
 
     /// <summary>
+    /// Tries to parse the specified input span into a <see cref="Cpf"/>.
+    /// </summary>
+    /// <param name="input">The input characters to parse.</param>
+    /// <param name="cpf">When this method returns, contains the parsed <see cref="Cpf"/> if successful.</param>
+    /// <returns><c>true</c> if parsing was successful; otherwise, <c>false</c>.</returns>
+    public static bool TryParse(ReadOnlySpan<char> input, out Cpf cpf)
+    {
+        if (TryConvertToNumber(input, out var number) && IsValidNumber(number))
+        {
+            cpf = new Cpf(number);
+            return true;
+        }
+        cpf = Empty;
+        return false;
+    }
+
+    /// <summary>
     /// Tries to parse the specified input string into a <see cref="Cpf"/>.
     /// </summary>
     /// <param name="input">The input string to parse.</param>
     /// <returns>A <see cref="Cpf"/> if successful; otherwise, <c>null</c>.</returns>
     public static Cpf? TryParse(string? input)
+    {
+        if (TryParse(input, out var cpf)) return cpf;
+        return null;
+    }
+
+    /// <summary>
+    /// Tries to parse the specified input span into a <see cref="Cpf"/>.
+    /// </summary>
+    /// <param name="input">The input characters to parse.</param>
+    /// <returns>A <see cref="Cpf"/> if successful; otherwise, <c>null</c>.</returns>
+    public static Cpf? TryParse(ReadOnlySpan<char> input)
     {
         if (TryParse(input, out var cpf)) return cpf;
         return null;
@@ -369,6 +441,20 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>
             return long.TryParse(input, out cpf);
         }
 
+        return TryConvertToNumber(input.AsSpan(), out cpf);
+    }
+
+    private static bool TryConvertToNumber(ReadOnlySpan<char> input, out long cpf)
+    {
+        cpf = 0;
+        if (input.IsEmpty) return false;
+
+        // Security: Prevent DoS with excessively long inputs
+        // Max valid CPF with formatting: "000.000.000-00" = 14 characters
+        // Allow some extra room for unusual formatting, but cap at reasonable limit
+        if (input.Length > 20)
+            return false;
+
         // Slow path: remove punctuation
         // Count digits first to pre-check
         var digitCount = 0;
@@ -383,7 +469,7 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>
         if (digitCount is < 1 or > 11)
             return false;
 
-        // Build number without allocation when possible
+        // Build number without allocation
         long result = 0;
         foreach (var c in input)
         {
@@ -398,6 +484,11 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>
     }
 
     private static bool ContainsPunctuation(string s)
+    {
+        return ContainsPunctuation(s.AsSpan());
+    }
+
+    private static bool ContainsPunctuation(ReadOnlySpan<char> s)
     {
         foreach (var c in s)
         {
@@ -440,6 +531,17 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>
             "G" => FormatGeneral(),
             _ => throw new ArgumentOutOfRangeException(nameof(format), "Format must be S, B, or G")
         };
+    }
+
+    /// <summary>
+    /// Converts the CPF to a string representation using the specified format and format provider.
+    /// </summary>
+    /// <param name="format">The format specifier.</param>
+    /// <param name="formatProvider">An object that supplies culture-specific formatting information.</param>
+    /// <returns>A formatted string representation of the CPF.</returns>
+    public string ToString(string? format, IFormatProvider? formatProvider)
+    {
+        return ToString(string.IsNullOrEmpty(format) ? "G" : format);
     }
 
     private string FormatGeneral()

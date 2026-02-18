@@ -118,6 +118,35 @@ public class CnpjTests
     }
 
     [Test]
+    public void Constructor_FromSpan_WithValidCnpj_ShouldSucceed()
+    {
+        var cnpj = new Cnpj("09358105000191".AsSpan());
+        Assert.That(cnpj.ToString("B"), Is.EqualTo("09358105000191"));
+    }
+
+    [Test]
+    public void IsValid_ReadOnlySpan_WithValidCnpj_ShouldReturnTrue()
+    {
+        var cnpj = "09.358.105/0001-91".AsSpan();
+        Assert.That(Cnpj.IsValid(cnpj), Is.True);
+    }
+
+    [Test]
+    public void Parse_ReadOnlySpan_WithValidCnpj_ShouldSucceed()
+    {
+        var cnpj = Cnpj.Parse("09.358.105/0001-91".AsSpan());
+        Assert.That(cnpj.ToString("B"), Is.EqualTo("09358105000191"));
+    }
+
+    [Test]
+    public void TryParse_ReadOnlySpan_WithValidCnpj_ShouldReturnTrue()
+    {
+        var input = "09.358.105/0001-91".AsSpan();
+        Assert.That(Cnpj.TryParse(input, out var cnpj), Is.True);
+        Assert.That(cnpj.ToString("B"), Is.EqualTo("09358105000191"));
+    }
+
+    [Test]
     public void Parse_WithInvalidCnpj_ShouldThrowBadDocumentException()
     {
         Assert.That(() => Cnpj.Parse("invalid"),
@@ -239,6 +268,17 @@ public class CnpjTests
     {
         var cnpj = new Cnpj("09358105000191");
         Assert.That(cnpj.ToString(), Is.EqualTo("09.358.105/0001-91"));
+    }
+
+    [Test]
+    public void StringInterpolation_ShouldUseFormatSpecifiers()
+    {
+        var cnpj = new Cnpj("09358105000191");
+        var general = $"{cnpj}";
+        var bare = $"{cnpj:B}";
+
+        Assert.That(general, Is.EqualTo("09.358.105/0001-91"));
+        Assert.That(bare, Is.EqualTo("09358105000191"));
     }
 
     [Test]

@@ -43,7 +43,7 @@ namespace Elekto.BrazilianDocuments;
 /// </code>
 /// </example>
 [JsonConverter(typeof(CnpjJsonConverter))]
-public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>
+public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, IFormattable
 {
     // Multipliers for check digit calculation
     private static readonly int[] Multiplier1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
@@ -86,6 +86,29 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>
         }
 
         _cnpj = CleanAndNormalize(cnpj);
+    }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Cnpj"/> struct.
+    /// </summary>
+    /// <param name="cnpj">The CNPJ characters to parse.</param>
+    /// <exception cref="BadDocumentException">Thrown when <paramref name="cnpj"/> is not a valid CNPJ.</exception>
+    public Cnpj(ReadOnlySpan<char> cnpj)
+    {
+        var input = new string(cnpj.ToArray());
+        if (string.IsNullOrWhiteSpace(input))
+        {
+            throw new BadDocumentException(input, DocumentType.Cnpj);
+        }
+
+        // Sample: 20.913.792/0001-01 or L3.ZHM.RO3/VI7K-43
+        input = input.Trim();
+        if (input.Length > MaxInputLength || !Validate(input))
+        {
+            throw new BadDocumentException(input, DocumentType.Cnpj);
+        }
+
+        _cnpj = CleanAndNormalize(input);
     }
 
     // Private constructor for internal use
@@ -209,6 +232,16 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>
     }
 
     /// <summary>
+    /// Determines whether the specified CNPJ span is valid.
+    /// </summary>
+    /// <param name="cnpj">The CNPJ characters to validate.</param>
+    /// <returns><c>true</c> if the CNPJ is valid; otherwise, <c>false</c>.</returns>
+    public static bool IsValid(ReadOnlySpan<char> cnpj)
+    {
+        return Validate(cnpj);
+    }
+
+    /// <summary>
     /// Parses the specified input string into a <see cref="Cnpj"/>.
     /// </summary>
     /// <param name="input">The input string to parse.</param>
@@ -219,6 +252,22 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>
         if (!TryParse(input, out var cnpj))
         {
             throw new BadDocumentException(input, DocumentType.Cnpj);
+        }
+
+        return cnpj;
+    }
+
+    /// <summary>
+    /// Parses the specified input span into a <see cref="Cnpj"/>.
+    /// </summary>
+    /// <param name="input">The input characters to parse.</param>
+    /// <returns>A valid <see cref="Cnpj"/>.</returns>
+    /// <exception cref="BadDocumentException">Thrown when <paramref name="input"/> is not a valid CNPJ.</exception>
+    public static Cnpj Parse(ReadOnlySpan<char> input)
+    {
+        if (!TryParse(input, out var cnpj))
+        {
+            throw new BadDocumentException(new string(input.ToArray()), DocumentType.Cnpj);
         }
 
         return cnpj;
@@ -243,11 +292,40 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>
     }
 
     /// <summary>
+    /// Tries to parse the specified input span into a <see cref="Cnpj"/>.
+    /// </summary>
+    /// <param name="input">The input characters to parse.</param>
+    /// <param name="cnpj">When this method returns, contains the parsed <see cref="Cnpj"/> if successful.</param>
+    /// <returns><c>true</c> if parsing was successful; otherwise, <c>false</c>.</returns>
+    public static bool TryParse(ReadOnlySpan<char> input, out Cnpj cnpj)
+    {
+        if (!IsValid(input))
+        {
+            cnpj = Empty;
+            return false;
+        }
+
+        cnpj = new Cnpj(new string(input.ToArray()));
+        return true;
+    }
+
+    /// <summary>
     /// Tries to parse the specified input string into a <see cref="Cnpj"/>.
     /// </summary>
     /// <param name="input">The input string to parse.</param>
     /// <returns>A <see cref="Cnpj"/> if successful; otherwise, <c>null</c>.</returns>
     public static Cnpj? TryParse(string? input)
+    {
+        if (TryParse(input, out var cnpj)) return cnpj;
+        return null;
+    }
+
+    /// <summary>
+    /// Tries to parse the specified input span into a <see cref="Cnpj"/>.
+    /// </summary>
+    /// <param name="input">The input characters to parse.</param>
+    /// <returns>A <see cref="Cnpj"/> if successful; otherwise, <c>null</c>.</returns>
+    public static Cnpj? TryParse(ReadOnlySpan<char> input)
     {
         if (TryParse(input, out var cnpj)) return cnpj;
         return null;
@@ -293,7 +371,28 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>
 
     private static bool Validate(string? cnpj)
     {
-        if (string.IsNullOrWhiteSpace(cnpj) || cnpj!.Length > MaxInputLength || cnpj.Length < 7)
+        if (string.IsNullOrWhiteSpace(cnpj))
+            return false;
+
+        return Validate(cnpj.AsSpan());
+    }
+
+    private static bool Validate(ReadOnlySpan<char> cnpj)
+    {
+        if (cnpj.IsEmpty || cnpj.Length > MaxInputLength || cnpj.Length < 7)
+            return false;
+
+        var hasNonWhitespace = false;
+        foreach (var c in cnpj)
+        {
+            if (!char.IsWhiteSpace(c))
+            {
+                hasNonWhitespace = true;
+                break;
+            }
+        }
+
+        if (!hasNonWhitespace)
             return false;
 
         var validChars = 0;
@@ -507,6 +606,17 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>
             "G" => $"{_cnpj.Substring(0, 2)}.{_cnpj.Substring(2, 3)}.{_cnpj.Substring(5, 3)}/{_cnpj.Substring(8, 4)}-{_cnpj.Substring(12, 2)}",
             _ => throw new ArgumentOutOfRangeException(nameof(format), "Format must be S, B, BS, or G")
         };
+    }
+
+    /// <summary>
+    /// Converts the CNPJ to a string representation using the specified format and format provider.
+    /// </summary>
+    /// <param name="format">The format specifier.</param>
+    /// <param name="formatProvider">An object that supplies culture-specific formatting information.</param>
+    /// <returns>A formatted string representation of the CNPJ.</returns>
+    public string ToString(string? format, IFormatProvider? formatProvider)
+    {
+        return ToString(string.IsNullOrEmpty(format) ? "G" : format);
     }
 
     /// <summary>

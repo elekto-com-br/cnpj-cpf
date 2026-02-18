@@ -142,6 +142,35 @@ public class CpfTests
     }
 
     [Test]
+    public void Constructor_FromSpan_WithValidCpf_ShouldSucceed()
+    {
+        var cpf = new Cpf("123.456.789-09".AsSpan());
+        Assert.That(cpf.ToLong(), Is.EqualTo(12345678909L));
+    }
+
+    [Test]
+    public void IsValid_ReadOnlySpan_WithValidCpf_ShouldReturnTrue()
+    {
+        var cpf = "123.456.789-09".AsSpan();
+        Assert.That(Cpf.IsValid(cpf), Is.True);
+    }
+
+    [Test]
+    public void Parse_ReadOnlySpan_WithValidCpf_ShouldSucceed()
+    {
+        var cpf = Cpf.Parse("123.456.789-09".AsSpan());
+        Assert.That(cpf.ToLong(), Is.EqualTo(12345678909L));
+    }
+
+    [Test]
+    public void TryParse_ReadOnlySpan_WithValidCpf_ShouldReturnTrue()
+    {
+        var input = "123.456.789-09".AsSpan();
+        Assert.That(Cpf.TryParse(input, out var cpf), Is.True);
+        Assert.That(cpf.ToLong(), Is.EqualTo(12345678909L));
+    }
+
+    [Test]
     public void Parse_WithInvalidCpf_ShouldThrowBadDocumentException()
     {
         Assert.That(() => Cpf.Parse("invalid"),
@@ -267,6 +296,17 @@ public class CpfTests
     {
         var cpf = new Cpf(1234567890L);
         Assert.That(cpf.ToString("G"), Is.EqualTo("012.345.678-90"));
+    }
+
+    [Test]
+    public void StringInterpolation_ShouldUseFormatSpecifiers()
+    {
+        var cpf = new Cpf(12345678909L);
+        var general = $"{cpf}";
+        var bare = $"{cpf:B}";
+
+        Assert.That(general, Is.EqualTo("123.456.789-09"));
+        Assert.That(bare, Is.EqualTo("12345678909"));
     }
 
     [Test]
@@ -472,10 +512,10 @@ public class CpfTests
 
     private class TestCpf
     {
-        public string Cpf { get; set; } = null!;
-        public bool IsValid { get; set; }
-        public string ValidCpf { get; set; } = null!;
-        public bool? IsValidResult { get; set; } = null;
+        public string Cpf { get; init; } = null!;
+        public bool IsValid { get; init; }
+        public string ValidCpf { get; init; } = null!;
+        public bool? IsValidResult { get; set; }
     }
 
     [TestCase(0.0, 0.0, 100_000, true)]
