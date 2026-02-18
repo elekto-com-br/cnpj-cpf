@@ -20,7 +20,7 @@ If you're not familiar with Brazilian tax identifiers, here's a brief overview.
 
 ### CPF (Cadastro de Pessoas Físicas)
 
-The **CPF** is Brazil's individual taxpayer identification number, issued by the [Receita Federal](https://www.gov.br/receitafederal/pt-br/assuntos/orientacao-tributaria/cadastros/cpf) (Federal Revenue Service). It is similar to the U.S. Social Security Number (SSN), India's PAN, or the EU's Tax Identification Number (TIN). Every individual in Brazil — citizen or resident — must have a CPF for banking, employment, property transactions, and many other activities.
+The **CPF** is Brazil's individual taxpayer identification number, issued by the [Receita Federal](https://www.gov.br/receitafederal/pt-br/assuntos/meu-cpf) (Federal Revenue Service). It is similar to the U.S. Social Security Number (SSN), India's PAN, or the EU's Tax Identification Number (TIN). Every individual in Brazil — citizen or resident — must have a CPF for banking, employment, property transactions, and many other activities.
 
 A CPF has **11 numeric digits** in the format `NNN.NNN.NNN-DD`:
 - The first **9 digits** identify the taxpayer
@@ -35,7 +35,7 @@ A CNPJ has **14 characters** in the format `RR.RRR.RRR/BBBB-DD`:
 - The next **4 characters** (`B`) are the **branch/order number** (0001 = headquarters)
 - The last **2 digits** (`DD`) are **check digits**, calculated using a weighted modulo-11 algorithm
 
-**Starting in July 2026**, the Receita Federal will issue [alphanumeric CNPJs](https://www.gov.br/receitafederal/pt-br/assuntos/orientacao-tributaria/cadastros/cnpj/cnpj-alfanumerico) (letters A–Z in addition to digits 0–9), as defined by [Instrução Normativa RFB nº 2.229/2024](https://www.in.gov.br/en/web/dou/-/instrucao-normativa-rfb-n-2.229-de-18-de-outubro-de-2024-591062981). This library fully supports this new format.
+**Starting in July 2026**, the Receita Federal will issue [alphanumeric CNPJs](https://www.gov.br/receitafederal/pt-br/acesso-a-informacao/acoes-e-programas/programas-e-atividades/cnpj-alfanumerico) (letters A–Z in addition to digits 0–9), as defined by [Instrução Normativa RFB nº 2.229/2024](https://www.in.gov.br/en/web/dou/-/instrucao-normativa-rfb-n-2.229-de-18-de-outubro-de-2024-591062981). This library fully supports this new format.
 
 ### Check Digit Algorithm
 
