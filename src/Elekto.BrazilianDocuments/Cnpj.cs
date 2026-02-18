@@ -616,7 +616,7 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
     /// <returns>A formatted string representation of the CNPJ.</returns>
     public string ToString(string? format, IFormatProvider? formatProvider)
     {
-        return ToString(string.IsNullOrEmpty(format) ? "G" : format);
+        return ToString(string.IsNullOrWhiteSpace(format) ? "G" : format!);
     }
 
     /// <summary>

@@ -479,6 +479,7 @@ public class CpfTests
     public void Equals_WithDifferentType_ShouldReturnFalse()
     {
         var cpf = new Cpf(12345678909L);
+        // ReSharper disable once SuspiciousTypeConversion.Global
         Assert.That(cpf.Equals("not a cpf"), Is.False);
     }
 

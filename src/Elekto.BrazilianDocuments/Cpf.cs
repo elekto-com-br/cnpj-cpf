@@ -541,7 +541,7 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFo
     /// <returns>A formatted string representation of the CPF.</returns>
     public string ToString(string? format, IFormatProvider? formatProvider)
     {
-        return ToString(string.IsNullOrEmpty(format) ? "G" : format);
+        return ToString(string.IsNullOrWhiteSpace(format) ? "G" : format!);
     }
 
     private string FormatGeneral()
