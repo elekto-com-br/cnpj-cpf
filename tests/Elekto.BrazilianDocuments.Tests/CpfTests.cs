@@ -616,6 +616,85 @@ public class CpfTests
         }
     }
 
+    [Test]
+    public void TryParse_ReadOnlySpan_WithValidFormatButBadCheckDigit_ShouldReturnFalse()
+    {
+        // TryConvert succeeds (valid format) but IsValidNumber fails (bad check digit)
+        Assert.That(Cpf.TryParse("12345678900".AsSpan(), out _), Is.False);
+        Assert.That(Cpf.TryParse("987.654.321-01".AsSpan(), out _), Is.False);
+    }
+
+    [Test]
+    public void Constructor_String_WithValidFormatButBadCheckDigit_ShouldThrowBadDocumentException()
+    {
+        // TryConvert succeeds but IsValidNumber fails – covers the !IsValidNumber branch in Cpf(string)
+        Assert.That(() => new Cpf("987.654.321-01"),
+            Throws.TypeOf<BadDocumentException>()
+                .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cpf));
+    }
+
+    // ── Span overload – bad-path coverage ────────────────────────────────────
+
+    [Test]
+    public void Constructor_FromSpan_WithInvalidCpf_ShouldThrowBadDocumentException()
+    {
+        Assert.That(() => new Cpf("12345678900".AsSpan()),
+            Throws.TypeOf<BadDocumentException>()
+                .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cpf));
+    }
+
+    [Test]
+    public void Constructor_FromSpan_WithNonNumericInput_ShouldThrowBadDocumentException()
+    {
+        Assert.That(() => new Cpf("abc".AsSpan()),
+            Throws.TypeOf<BadDocumentException>()
+                .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cpf));
+    }
+
+    [Test]
+    public void IsValid_ReadOnlySpan_WithInvalidCpf_ShouldReturnFalse()
+    {
+        Assert.That(Cpf.IsValid("12345678900".AsSpan()), Is.False);
+        Assert.That(Cpf.IsValid("abc".AsSpan()), Is.False);
+        Assert.That(Cpf.IsValid(ReadOnlySpan<char>.Empty), Is.False);
+    }
+
+    [Test]
+    public void IsValid_ReadOnlySpan_WithTooLongInput_ShouldReturnFalse()
+    {
+        var longSpan = new string('1', 25).AsSpan();
+        Assert.That(Cpf.IsValid(longSpan), Is.False);
+    }
+
+    [Test]
+    public void Parse_ReadOnlySpan_WithInvalidCpf_ShouldThrowBadDocumentException()
+    {
+        Assert.That(() => Cpf.Parse("12345678900".AsSpan()),
+            Throws.TypeOf<BadDocumentException>()
+                .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cpf));
+    }
+
+    [Test]
+    public void TryParse_ReadOnlySpan_WithInvalidCpf_ShouldReturnFalse()
+    {
+        Assert.That(Cpf.TryParse("12345678900".AsSpan(), out _), Is.False);
+    }
+
+    [Test]
+    public void TryParse_NullableSpan_WithInvalidCpf_ShouldReturnNull()
+    {
+        Cpf? result = Cpf.TryParse("12345678900".AsSpan());
+        Assert.That(result, Is.Null);
+    }
+
+    [Test]
+    public void TryParse_NullableSpan_WithValidCpf_ShouldReturnCpf()
+    {
+        Cpf? result = Cpf.TryParse("123.456.789-09".AsSpan());
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Value.ToLong(), Is.EqualTo(12345678909L));
+    }
+
     private class CpfContainer
     {
         public Cpf MainCpf { get; init; }

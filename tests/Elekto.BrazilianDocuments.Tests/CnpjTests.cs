@@ -856,4 +856,90 @@ public class CnpjTests
 
         return (new string(rootChars), new string(branchChars));
     }
+
+    [Test]
+    public void Constructor_FromSpan_WithTooLongInput_ShouldThrowBadDocumentException()
+    {
+        // input.Length > MaxInputLength – short-circuits the || so !Validate is not evaluated
+        var longString = new string('1', 20);
+        Assert.That(() => new Cnpj(longString.AsSpan()),
+            Throws.TypeOf<BadDocumentException>()
+                .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cnpj));
+    }
+
+    [Test]
+    public void Constructor_FromSpan_WithTooLongButValidCharCount_ShouldThrowBadDocumentException()
+    {
+        // input.Length <= MaxInputLength but !Validate – covers the second branch of the || on line 106
+        Assert.That(() => new Cnpj("12345678901234".AsSpan()),
+            Throws.TypeOf<BadDocumentException>()
+                .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cnpj));
+    }
+
+    // ── Span overload – bad-path coverage ────────────────────────────────────
+
+    [Test]
+    public void Constructor_FromSpan_WithEmptySpan_ShouldThrowBadDocumentException()
+    {
+        Assert.That(() => new Cnpj(ReadOnlySpan<char>.Empty),
+            Throws.TypeOf<BadDocumentException>()
+                .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cnpj));
+    }
+
+    [Test]
+    public void Constructor_FromSpan_WithWhitespaceSpan_ShouldThrowBadDocumentException()
+    {
+        Assert.That(() => new Cnpj("   ".AsSpan()),
+            Throws.TypeOf<BadDocumentException>()
+                .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cnpj));
+    }
+
+    [Test]
+    public void Constructor_FromSpan_WithInvalidCnpj_ShouldThrowBadDocumentException()
+    {
+        Assert.That(() => new Cnpj("12345678901234".AsSpan()),
+            Throws.TypeOf<BadDocumentException>()
+                .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cnpj));
+    }
+
+    [Test]
+    public void IsValid_ReadOnlySpan_WithAllWhitespace_ShouldReturnFalse()
+    {
+        Assert.That(Cnpj.IsValid("         ".AsSpan()), Is.False);
+    }
+
+    [Test]
+    public void IsValid_ReadOnlySpan_WithInvalidCnpj_ShouldReturnFalse()
+    {
+        Assert.That(Cnpj.IsValid("12345678901234".AsSpan()), Is.False);
+    }
+
+    [Test]
+    public void Parse_ReadOnlySpan_WithInvalidCnpj_ShouldThrowBadDocumentException()
+    {
+        Assert.That(() => Cnpj.Parse("12345678901234".AsSpan()),
+            Throws.TypeOf<BadDocumentException>()
+                .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cnpj));
+    }
+
+    [Test]
+    public void TryParse_ReadOnlySpan_WithInvalidCnpj_ShouldReturnFalse()
+    {
+        Assert.That(Cnpj.TryParse("12345678901234".AsSpan(), out _), Is.False);
+    }
+
+    [Test]
+    public void TryParse_NullableSpan_WithInvalidCnpj_ShouldReturnNull()
+    {
+        Cnpj? result = Cnpj.TryParse("12345678901234".AsSpan());
+        Assert.That(result, Is.Null);
+    }
+
+    [Test]
+    public void TryParse_NullableSpan_WithValidCnpj_ShouldReturnCnpj()
+    {
+        Cnpj? result = Cnpj.TryParse("09358105000191".AsSpan());
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Value.ToString("B"), Is.EqualTo("09358105000191"));
+    }
 }
