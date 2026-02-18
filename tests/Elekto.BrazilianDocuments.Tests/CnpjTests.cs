@@ -313,18 +313,17 @@ public class CnpjTests
     }
 
     [Test]
-    public void ImplicitConversion_FromString_ShouldWork()
+    public void Parse_FromString_ShouldWork()
     {
-        Cnpj? cnpj = "09358105000191";
-        Assert.That(cnpj, Is.Not.Null);
-        Assert.That(cnpj!.Value.ToString("B"), Is.EqualTo("09358105000191"));
+        var cnpj = Cnpj.Parse("09358105000191");
+        Assert.That(cnpj.ToString("B"), Is.EqualTo("09358105000191"));
     }
 
     [Test]
-    public void ImplicitConversion_FromNullOrEmpty_ShouldReturnNull()
+    public void TryParse_FromNullOrEmpty_ShouldReturnNull()
     {
-        Cnpj? cnpj1 = null;
-        Cnpj? cnpj2 = "";
+        Cnpj? cnpj1 = Cnpj.TryParse(null);
+        Cnpj? cnpj2 = Cnpj.TryParse(string.Empty);
 
         Assert.That(cnpj1, Is.Null);
         Assert.That(cnpj2, Is.Null);
@@ -423,9 +422,9 @@ public class CnpjTests
     }
 
     [Test]
-    public void ImplicitOperator_WithInvalidString_ShouldThrowBadDocumentException()
+    public void Parse_WithInvalidString_ShouldThrowBadDocumentException()
     {
-        Assert.That(() => { Cnpj? c = "invalid-cnpj"; }, Throws.TypeOf<BadDocumentException>()
+        Assert.That(() => Cnpj.Parse("invalid-cnpj"), Throws.TypeOf<BadDocumentException>()
             .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cnpj));
     }
 
@@ -447,7 +446,7 @@ public class CnpjTests
 
     private class CnpjContainer
     {
-        public Cnpj MainCnpj { get; set; }
-        public Cnpj[] Related { get; set; } = [];
+        public Cnpj MainCnpj { get; init; }
+        public Cnpj[] Related { get; init; } = [];
     }
 }

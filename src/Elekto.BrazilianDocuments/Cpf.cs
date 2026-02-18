@@ -488,18 +488,6 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>
     }
 
     /// <summary>
-    /// Implicitly converts a string to a nullable <see cref="Cpf"/>.
-    /// </summary>
-    /// <param name="cpf">The CPF string.</param>
-    /// <returns>A <see cref="Cpf"/> if valid; otherwise, <c>null</c> for null or empty input.</returns>
-    /// <exception cref="BadDocumentException">Thrown when <paramref name="cpf"/> is not null/empty but is invalid.</exception>
-    public static implicit operator Cpf?(string? cpf)
-    {
-        if (string.IsNullOrEmpty(cpf)) return null;
-        return new Cpf(cpf!);
-    }
-
-    /// <summary>
     /// Returns the string representation of this CPF in the general format (with punctuation).
     /// </summary>
     /// <returns>A string representation of the CPF, e.g., "123.456.789-09".</returns>

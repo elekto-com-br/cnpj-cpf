@@ -541,18 +541,6 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>
     }
 
     /// <summary>
-    /// Implicitly converts a string to a nullable <see cref="Cnpj"/>.
-    /// </summary>
-    /// <param name="cnpj">The CNPJ string.</param>
-    /// <returns>A <see cref="Cnpj"/> if valid; otherwise, <c>null</c> for null or empty input.</returns>
-    /// <exception cref="BadDocumentException">Thrown when <paramref name="cnpj"/> is not null/empty but is invalid.</exception>
-    public static implicit operator Cnpj?(string? cnpj)
-    {
-        if (string.IsNullOrEmpty(cnpj)) return null;
-        return new Cnpj(cnpj!);
-    }
-
-    /// <summary>
     /// Returns the string representation of this CNPJ in the general format (with punctuation).
     /// </summary>
     /// <returns>A string representation of the CNPJ, e.g., "09.358.105/0001-91".</returns>

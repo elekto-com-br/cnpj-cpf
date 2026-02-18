@@ -306,18 +306,17 @@ public class CpfTests
     }
 
     [Test]
-    public void ImplicitConversion_FromString_ShouldWork()
+    public void Parse_FromString_ShouldWork()
     {
-        Cpf? cpf = "123.456.789-09";
-        Assert.That(cpf, Is.Not.Null);
-        Assert.That(cpf!.Value.ToLong(), Is.EqualTo(12345678909L));
+        var cpf = Cpf.Parse("123.456.789-09");
+        Assert.That(cpf.ToLong(), Is.EqualTo(12345678909L));
     }
 
     [Test]
-    public void ImplicitConversion_FromNullOrEmpty_ShouldReturnNull()
+    public void TryParse_FromNullOrEmpty_ShouldReturnNull()
     {
-        Cpf? cpf1 = null;
-        Cpf? cpf2 = "";
+        Cpf? cpf1 = Cpf.TryParse(null);
+        Cpf? cpf2 = Cpf.TryParse(string.Empty);
 
         Assert.That(cpf1, Is.Null);
         Assert.That(cpf2, Is.Null);
@@ -444,12 +443,9 @@ public class CpfTests
     }
 
     [Test]
-    public void ImplicitOperator_WithInvalidString_ShouldThrowBadDocumentException()
+    public void Parse_WithInvalidString_ShouldThrowBadDocumentException()
     {
-        Assert.That(() =>
-        {
-            Cpf? c = "invalid-cpf";
-        }, Throws.TypeOf<BadDocumentException>()
+        Assert.That(() => Cpf.Parse("invalid-cpf"), Throws.TypeOf<BadDocumentException>()
             .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cpf));
     }
 
@@ -581,7 +577,7 @@ public class CpfTests
 
     private class CpfContainer
     {
-        public Cpf MainCpf { get; set; }
-        public Cpf[] Related { get; set; } = [];
+        public Cpf MainCpf { get; init; }
+        public Cpf[] Related { get; init; } = [];
     }
 }

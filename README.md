@@ -186,18 +186,17 @@ The validation algorithm correctly handles:
 - Leading zero omission (e.g., `1/0001-36` is valid)
 - Various punctuation formats
 
-## Implicit Conversions
+## Parsing Helpers
 
-Both `Cpf` and `Cnpj` support implicit conversion from `string`:
+Use `Parse` for throwing behavior and `TryParse` for non-throwing behavior:
 
 ```csharp
-Cpf? cpf = "123.456.789-09";   // Valid: returns Cpf
-Cpf? empty = null;               // Returns null
-Cpf? alsoEmpty = "";             // Returns null
-Cpf? bad = "invalid";            // Throws BadDocumentException
-```
+var cpf = Cpf.Parse("123.456.789-09");
+var cnpj = Cnpj.Parse("09.358.105/0001-91");
 
-> **Note**: The implicit conversion throws `BadDocumentException` for non-null, non-empty invalid inputs. If you prefer non-throwing behavior, use `TryParse` instead.
+Cpf? maybeCpf = Cpf.TryParse("123.456.789-09");
+Cnpj? maybeCnpj = Cnpj.TryParse("09.358.105/0001-91");
+```
 
 ## JSON Serialization
 
