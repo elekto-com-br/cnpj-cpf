@@ -1,3 +1,5 @@
+// Copyright (c) 2013-2026 Elekto Produtos Financeiros. Licensed under the MIT License.
+
 using System.Diagnostics.Contracts;
 using System.Globalization;
 using System.Text.Json;

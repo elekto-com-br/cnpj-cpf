@@ -1,3 +1,9 @@
+<div align="center">
+  <a href="https://elekto.com.br" target="_blank">
+    <img src="assets/elekto_logo_full.svg" alt="Elekto" height="56" />
+  </a>
+</div>
+
 # Elekto.BrazilianDocuments
 
 [![NuGet](https://img.shields.io/nuget/v/Elekto.BrazilianDocuments.svg)](https://www.nuget.org/packages/Elekto.BrazilianDocuments)

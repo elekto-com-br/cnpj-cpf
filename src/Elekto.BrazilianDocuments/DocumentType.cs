@@ -1,3 +1,5 @@
+// Copyright (c) 2013-2026 Elekto Produtos Financeiros. Licensed under the MIT License.
+
 namespace Elekto.BrazilianDocuments;
 
 /// <summary>

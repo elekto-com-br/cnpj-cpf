@@ -9,7 +9,7 @@
 
     <!-- NuGet Package Configuration -->
     <PackageId>Elekto.BrazilianDocuments</PackageId>
-    <Version>2.0.0</Version>
+    <Version>1.0.0</Version>
     <Authors>Elekto Produtos Financeiros</Authors>
     <Company>Elekto</Company>
     <Description>High-performance, zero-allocation validation for Brazilian documents (CNPJ and CPF). Supports the new alphanumeric CNPJ format introduced by Brazilian Federal Revenue Service.</Description>
@@ -19,6 +19,7 @@
     <RepositoryUrl>https://github.com/elekto-com-br/cnpj-cpf</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>elekto_logo_sq.300x300.png</PackageIcon>
     <Copyright>Copyright (c) 2013-2026 Elekto Produtos Financeiros</Copyright>
 
     <!-- Enable Source Link for debugging -->
@@ -30,6 +31,7 @@
 
   <ItemGroup>
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\assets\elekto_logo_sq.300x300.png" Pack="true" PackagePath="\" />
   </ItemGroup>
 
   <!-- Polyfill for netstandard2.0 -->
