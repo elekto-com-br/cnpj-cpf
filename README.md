@@ -3,6 +3,7 @@
 [![NuGet](https://img.shields.io/nuget/v/Elekto.BrazilianDocuments.svg)](https://www.nuget.org/packages/Elekto.BrazilianDocuments)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/elekto-com-br/cnpj-cpf/actions/workflows/ci.yml/badge.svg)](https://github.com/elekto-com-br/cnpj-cpf/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/github/elekto-com-br/cnpj-cpf/branch/master/graph/badge.svg?token=GWLRVAQE2U)](https://codecov.io/github/elekto-com-br/cnpj-cpf)
 
 High-performance, zero-allocation validation library for Brazilian documents (CNPJ and CPF).
 
