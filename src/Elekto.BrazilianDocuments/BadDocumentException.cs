@@ -13,7 +13,7 @@ public class BadDocumentException : ArgumentException
     public string? InvalidDocument { get; }
 
     /// <summary>
-    /// Gets the document source that caused the exception.
+    /// Gets the type of document that caused the exception.
     /// </summary>
     public DocumentType SourceType { get; }
 

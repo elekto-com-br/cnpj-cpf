@@ -19,7 +19,7 @@
     <RepositoryUrl>https://github.com/elekto-com-br/cnpj-cpf</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <Copyright>Copyright (c) 2013-2025 Elekto Produtos Financeiros</Copyright>
+    <Copyright>Copyright (c) 2013-2026 Elekto Produtos Financeiros</Copyright>
 
     <!-- Enable Source Link for debugging -->
     <PublishRepositoryUrl>true</PublishRepositoryUrl>

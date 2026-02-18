@@ -14,6 +14,43 @@ High-performance, zero-allocation validation library for Brazilian documents (CN
 - **JSON Serialization**: Built-in `System.Text.Json` support with custom converters
 - **Multi-Target**: Supports .NET 8, .NET 9 .NET 10, and .NET Standard 2.0
 
+## Background: CPF and CNPJ
+
+If you're not familiar with Brazilian tax identifiers, here's a brief overview.
+
+### CPF (Cadastro de Pessoas Físicas)
+
+The **CPF** is Brazil's individual taxpayer identification number, issued by the [Receita Federal](https://www.gov.br/receitafederal/pt-br/assuntos/orientacao-tributaria/cadastros/cpf) (Federal Revenue Service). It is similar to the U.S. Social Security Number (SSN), India's PAN, or the EU's Tax Identification Number (TIN). Every individual in Brazil — citizen or resident — must have a CPF for banking, employment, property transactions, and many other activities.
+
+A CPF has **11 numeric digits** in the format `NNN.NNN.NNN-DD`:
+- The first **9 digits** identify the taxpayer
+- The last **2 digits** (`DD`) are **check digits**, calculated using a weighted modulo-11 algorithm
+
+### CNPJ (Cadastro Nacional da Pessoa Jurídica)
+
+The **CNPJ** is Brazil's company registration number, also issued by the [Receita Federal](https://www.gov.br/receitafederal/pt-br/assuntos/orientacao-tributaria/cadastros/cnpj). It is similar to the U.S. EIN (Employer Identification Number) or the EU's VAT number. Every legal entity operating in Brazil must have a CNPJ.
+
+A CNPJ has **14 characters** in the format `RR.RRR.RRR/BBBB-DD`:
+- The first **8 characters** (`R`) are the **root**, identifying the company
+- The next **4 characters** (`B`) are the **branch/order number** (0001 = headquarters)
+- The last **2 digits** (`DD`) are **check digits**, calculated using a weighted modulo-11 algorithm
+
+**Starting in July 2026**, the Receita Federal will issue [alphanumeric CNPJs](https://www.gov.br/receitafederal/pt-br/assuntos/orientacao-tributaria/cadastros/cnpj/cnpj-alfanumerico) (letters A–Z in addition to digits 0–9), as defined by [Instrução Normativa RFB nº 2.229/2024](https://www.in.gov.br/en/web/dou/-/instrucao-normativa-rfb-n-2.229-de-18-de-outubro-de-2024-591062981). This library fully supports this new format.
+
+### Check Digit Algorithm
+
+Both CPF and CNPJ use a **weighted modulo-11** algorithm for check digit validation:
+
+1. Each character in the base number is assigned a positional weight
+2. Each character value is multiplied by its weight (for alphanumeric CNPJ, A=10, B=11, ..., Z=35)
+3. The products are summed
+4. The remainder of dividing the sum by 11 determines the check digit:
+   - If the remainder is less than 2, the check digit is **0**
+   - Otherwise, the check digit is **11 − remainder**
+5. The second check digit is calculated the same way, but including the first check digit in the input
+
+This is a well-known error-detection scheme that catches most single-digit errors and all transposition errors.
+
 ## Installation
 
 ```bash
@@ -149,6 +186,19 @@ The validation algorithm correctly handles:
 - Leading zero omission (e.g., `1/0001-36` is valid)
 - Various punctuation formats
 
+## Implicit Conversions
+
+Both `Cpf` and `Cnpj` support implicit conversion from `string`:
+
+```csharp
+Cpf? cpf = "123.456.789-09";   // Valid: returns Cpf
+Cpf? empty = null;               // Returns null
+Cpf? alsoEmpty = "";             // Returns null
+Cpf? bad = "invalid";            // Throws BadDocumentException
+```
+
+> **Note**: The implicit conversion throws `BadDocumentException` for non-null, non-empty invalid inputs. If you prefer non-throwing behavior, use `TryParse` instead.
+
 ## JSON Serialization
 
 Both types include built-in JSON converters:
@@ -186,6 +236,6 @@ The zero-allocation CNPJ validation algorithm is based on work by:
 
 ## License
 
-MIT License - Copyright (c) 2013-2025 Elekto Produtos Financeiros
+MIT License - Copyright (c) 2013-2026 Elekto Produtos Financeiros
 
 See [LICENSE](License.txt) for details.
