@@ -13,6 +13,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Extract version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -34,7 +37,7 @@ jobs:
         run: >
           dotnet pack src/Elekto.BrazilianDocuments/Elekto.BrazilianDocuments.csproj
           --no-build -c Release
-          -p:Version=${{ github.ref_name }}
+          -p:Version=${{ env.VERSION }}
           --output ./dist
 
       - name: Publish to NuGet.org
