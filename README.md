@@ -215,6 +215,76 @@ var json = JsonSerializer.Serialize(company);
 var deserialized = JsonSerializer.Deserialize<Company>(json);
 ```
 
+## Ambiguous Input
+
+Some systems use a single field to hold either a CPF or a CNPJ — think of a generic "document number"
+column in a database or a free-text form field. `BrazilianDocument` is the helper for that scenario.
+
+### Why ambiguity can occur
+
+A CPF is an 11-digit number, while a numeric CNPJ has 14 digits. They are almost always distinct.
+However, because `Cnpj` supports leading-zero omission, an 11-character string can be valid as *both*
+a CPF **and** as a CNPJ with three implied leading zeros — e.g. `"00970938900"` is simultaneously a
+valid CPF and a valid CNPJ (interpreted as `00009709389‌00`). This is rare, but real.
+
+### The `hint` parameter — "try this type first"
+
+`BrazilianDocument` accepts an optional `DocumentType hint` on every method. The hint does not
+*restrict* which type is accepted — it controls which type is **attempted first**. If the preferred
+type does not match, the other is tried automatically.
+
+| `hint` | Behaviour |
+|---|---|
+| `DocumentType.Unknown` *(default)* | Try both; succeed only when exactly one type matches. Return failure if the input is ambiguous (both valid) or invalid (neither valid). |
+| `DocumentType.Cpf` | Try CPF first; if not a valid CPF, try CNPJ. |
+| `DocumentType.Cnpj` | Try CNPJ first; if not a valid CNPJ, try CPF. |
+
+### `IsValid` — returns `(bool IsValid, DocumentType Type)`
+
+Unlike `Cpf.IsValid` and `Cnpj.IsValid`, the combined helper also tells you *what* was found:
+
+```csharp
+// Unambiguous — no hint needed
+var (ok, type) = BrazilianDocument.IsValid("123.456.789-09");
+// ok=true, type=DocumentType.Cpf
+
+var (ok, type) = BrazilianDocument.IsValid("09.358.105/0001-91");
+// ok=true, type=DocumentType.Cnpj
+
+// Ambiguous — must supply a hint
+var (ok, type) = BrazilianDocument.IsValid("00970938900");
+// ok=false, type=DocumentType.Unknown  ← caller must decide
+
+var (ok, type) = BrazilianDocument.IsValid("00970938900", DocumentType.Cpf);
+// ok=true, type=DocumentType.Cpf       ← CPF wins
+```
+
+### `TryParse` — `DocumentType` return value as discriminator
+
+The return value tells you which out-parameter was set; the other is always `default`:
+
+```csharp
+var found = BrazilianDocument.TryParse(input, out Cpf cpf, out Cnpj cnpj);
+
+switch (found)
+{
+    case DocumentType.Cpf:     HandleCpf(cpf);   break;
+    case DocumentType.Cnpj:    HandleCnpj(cnpj); break;
+    case DocumentType.Unknown: // invalid or ambiguous — ask the user
+                               break;
+}
+```
+
+### `Parse` — throws `BadDocumentException` on failure or ambiguity
+
+```csharp
+// Resolves unambiguously or throws
+var found = BrazilianDocument.Parse(input, out Cpf cpf, out Cnpj cnpj);
+
+// If ambiguous, pass a hint to resolve — throws if still invalid
+var found = BrazilianDocument.Parse(input, out cpf, out cnpj, DocumentType.Cpf);
+```
+
 ## Performance
 
 Both types are engineered for high-throughput, zero-allocation validation — safe to call on hot paths without GC pressure.
