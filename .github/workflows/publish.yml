@@ -1,0 +1,52 @@
+name: Publish NuGet
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  publish:
+    name: Pack & Publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.x
+            9.x
+            10.x
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore -c Release
+
+      - name: Test
+        run: dotnet test --no-build -c Release --logger "console;verbosity=normal"
+
+      - name: Pack
+        run: >
+          dotnet pack src/Elekto.BrazilianDocuments/Elekto.BrazilianDocuments.csproj
+          --no-build -c Release
+          -p:Version=${{ github.ref_name }}
+          --output ./dist
+
+      - name: Publish to NuGet.org
+        run: >
+          dotnet nuget push ./dist/*.nupkg
+          --api-key ${{ secrets.NUGET_API_KEY }}
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate
+
+      - name: Publish symbols to NuGet.org
+        run: >
+          dotnet nuget push ./dist/*.snupkg
+          --api-key ${{ secrets.NUGET_API_KEY }}
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate
