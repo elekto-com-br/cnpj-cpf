@@ -42,6 +42,7 @@ namespace Elekto.BrazilianDocuments;
 /// Console.WriteLine(cpf.ToString("B")); // 12345678909
 /// </code>
 /// </example>
+[CLSCompliant(true)]
 [JsonConverter(typeof(CpfJsonConverter))]
 [DataContract(Name = "Cpf", Namespace = "https://elekto.com.br/types")]
 public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFormattable
@@ -88,6 +89,7 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFo
     /// </summary>
     /// <param name="cpf">The CPF characters to parse.</param>
     /// <exception cref="BadDocumentException">Thrown when <paramref name="cpf"/> is not a valid CPF.</exception>
+    [CLSCompliant(false)]
     public Cpf(ReadOnlySpan<char> cpf)
     {
         if (!TryConvertToNumber(cpf, out var number) || !IsValidNumber(number))
@@ -166,6 +168,7 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFo
     /// <summary>
     /// JSON converter for <see cref="Cpf"/>.
     /// </summary>
+    [CLSCompliant(false)]
     public class CpfJsonConverter : JsonConverter<Cpf>
     {
         /// <inheritdoc />
@@ -206,6 +209,7 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFo
     /// </summary>
     /// <param name="cpf">The CPF characters to validate.</param>
     /// <returns><c>true</c> if the CPF is valid; otherwise, <c>false</c>.</returns>
+    [CLSCompliant(false)]
     public static bool IsValid(ReadOnlySpan<char> cpf)
     {
         if (!TryConvertToNumber(cpf, out var number))
@@ -333,6 +337,7 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFo
     /// <param name="input">The input characters to parse.</param>
     /// <returns>A valid <see cref="Cpf"/>.</returns>
     /// <exception cref="BadDocumentException">Thrown when <paramref name="input"/> is not a valid CPF.</exception>
+    [CLSCompliant(false)]
     public static Cpf Parse(ReadOnlySpan<char> input)
     {
         if (!TryParse(input, out var cpf))
@@ -365,6 +370,7 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFo
     /// <param name="input">The input characters to parse.</param>
     /// <param name="cpf">When this method returns, contains the parsed <see cref="Cpf"/> if successful.</param>
     /// <returns><c>true</c> if parsing was successful; otherwise, <c>false</c>.</returns>
+    [CLSCompliant(false)]
     public static bool TryParse(ReadOnlySpan<char> input, out Cpf cpf)
     {
         if (TryConvertToNumber(input, out var number) && IsValidNumber(number))
@@ -392,6 +398,7 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFo
     /// </summary>
     /// <param name="input">The input characters to parse.</param>
     /// <returns>A <see cref="Cpf"/> if successful; otherwise, <c>null</c>.</returns>
+    [CLSCompliant(false)]
     public static Cpf? TryParse(ReadOnlySpan<char> input)
     {
         if (TryParse(input, out var cpf)) return cpf;

@@ -49,6 +49,7 @@ namespace Elekto.BrazilianDocuments;
 /// Console.WriteLine(cnpj.ToString("B")); // 00ELEKTO000140
 /// </code>
 /// </example>
+[CLSCompliant(true)]
 [JsonConverter(typeof(CnpjJsonConverter))]
 [DataContract(Name = "Cnpj", Namespace = "https://elekto.com.br/types")]
 public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, IFormattable
@@ -111,6 +112,7 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
     /// </summary>
     /// <param name="cnpj">The CNPJ characters to parse.</param>
     /// <exception cref="BadDocumentException">Thrown when <paramref name="cnpj"/> is not a valid CNPJ.</exception>
+    [CLSCompliant(false)]
     public Cnpj(ReadOnlySpan<char> cnpj)
     {
         var input = new string(cnpj.ToArray());
@@ -218,6 +220,7 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
     /// <summary>
     /// JSON converter for <see cref="Cnpj"/>.
     /// </summary>
+    [CLSCompliant(false)]
     public class CnpjJsonConverter : JsonConverter<Cnpj>
     {
         /// <inheritdoc />
@@ -254,6 +257,7 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
     /// </summary>
     /// <param name="cnpj">The CNPJ characters to validate.</param>
     /// <returns><c>true</c> if the CNPJ is valid; otherwise, <c>false</c>.</returns>
+    [CLSCompliant(false)]
     public static bool IsValid(ReadOnlySpan<char> cnpj)
     {
         return Validate(cnpj);
@@ -281,6 +285,7 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
     /// <param name="input">The input characters to parse.</param>
     /// <returns>A valid <see cref="Cnpj"/>.</returns>
     /// <exception cref="BadDocumentException">Thrown when <paramref name="input"/> is not a valid CNPJ.</exception>
+    [CLSCompliant(false)]
     public static Cnpj Parse(ReadOnlySpan<char> input)
     {
         if (!TryParse(input, out var cnpj))
@@ -315,6 +320,7 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
     /// <param name="input">The input characters to parse.</param>
     /// <param name="cnpj">When this method returns, contains the parsed <see cref="Cnpj"/> if successful.</param>
     /// <returns><c>true</c> if parsing was successful; otherwise, <c>false</c>.</returns>
+    [CLSCompliant(false)]
     public static bool TryParse(ReadOnlySpan<char> input, out Cnpj cnpj)
     {
         if (!IsValid(input))
@@ -343,6 +349,7 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
     /// </summary>
     /// <param name="input">The input characters to parse.</param>
     /// <returns>A <see cref="Cnpj"/> if successful; otherwise, <c>null</c>.</returns>
+    [CLSCompliant(false)]
     public static Cnpj? TryParse(ReadOnlySpan<char> input)
     {
         if (TryParse(input, out var cnpj)) return cnpj;
