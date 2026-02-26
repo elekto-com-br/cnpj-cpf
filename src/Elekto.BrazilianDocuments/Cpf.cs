@@ -1,7 +1,9 @@
 // Copyright (c) 2013-2026 Elekto Produtos Financeiros. Licensed under the MIT License.
 
+using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Globalization;
+using System.Runtime.Serialization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -18,6 +20,10 @@ namespace Elekto.BrazilianDocuments;
 /// <para>
 /// This implementation uses a 64-bit integer (long) for storage, providing optimal memory usage
 /// and fast comparisons. Validation is performed using zero-allocation techniques.
+/// </para>
+/// <para>
+/// This struct is decorated with <see cref="DataContractAttribute"/> to support serialization
+/// in legacy WCF/SOAP scenarios.
 /// </para>
 /// </remarks>
 /// <example>
@@ -37,6 +43,7 @@ namespace Elekto.BrazilianDocuments;
 /// </code>
 /// </example>
 [JsonConverter(typeof(CpfJsonConverter))]
+[DataContract(Name = "Cpf", Namespace = "https://elekto.com.br/types")]
 public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFormattable
 {
     /// <summary>
@@ -49,7 +56,17 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFo
     /// </summary>
     private const long MaxValue = 99_999_999_999L;
 
+    [DataMember(Name = "Value")]
     private readonly long _cpf;
+
+    [OnDeserialized]
+    private void OnDeserialized(StreamingContext context)
+    {
+        if (!IsValidNumber(_cpf))
+        {
+            throw new BadDocumentException(_cpf.ToString(), DocumentType.Cpf);
+        }
+    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Cpf"/> struct from a string.
@@ -429,12 +446,12 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFo
     private static bool TryConvertToNumber(string? input, out long cpf)
     {
         cpf = 0;
-        if (string.IsNullOrEmpty(input)) return false;
+        if (string.IsNullOrWhiteSpace(input)) return false;
 
         // Security: Prevent DoS with excessively long inputs
         // Max valid CPF with formatting: "000.000.000-00" = 14 characters
         // Allow some extra room for unusual formatting, but cap at reasonable limit
-        if (input!.Length > 20)
+        if (input.Length > 20)
             return false;
 
         // Fast path: try parsing directly if no punctuation
@@ -543,7 +560,7 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFo
     /// <returns>A formatted string representation of the CPF.</returns>
     public string ToString(string? format, IFormatProvider? formatProvider)
     {
-        return ToString(string.IsNullOrWhiteSpace(format) ? "G" : format!);
+        return ToString(string.IsNullOrWhiteSpace(format) ? "G" : format);
     }
 
     private string FormatGeneral()

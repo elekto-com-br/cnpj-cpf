@@ -28,6 +28,10 @@ public class BrazilianDocumentTests
         var (isValid, type) = BrazilianDocument.IsValid(ValidCpfOnly);
         Assert.That(isValid, Is.True);
         Assert.That(type, Is.EqualTo(DocumentType.Cpf));
+
+        (isValid, type) = BrazilianDocument.IsValid(ValidCpfOnly.AsSpan());
+        Assert.That(isValid, Is.True);
+        Assert.That(type, Is.EqualTo(DocumentType.Cpf));
     }
 
     [Test]
@@ -36,12 +40,48 @@ public class BrazilianDocumentTests
         var (isValid, type) = BrazilianDocument.IsValid(ValidCnpjOnly);
         Assert.That(isValid, Is.True);
         Assert.That(type, Is.EqualTo(DocumentType.Cnpj));
+
+        (isValid, type) = BrazilianDocument.IsValid(ValidCnpjOnly.AsSpan());
+        Assert.That(isValid, Is.True);
+        Assert.That(type, Is.EqualTo(DocumentType.Cnpj));
     }
 
     [Test]
     public void IsValid_InvalidInput_WithNoHint_ReturnsFalse_AndUnknown()
     {
         var (isValid, type) = BrazilianDocument.IsValid(InvalidBoth);
+        Assert.That(isValid, Is.False);
+        Assert.That(type, Is.EqualTo(DocumentType.Unknown));
+
+        (isValid, type) = BrazilianDocument.IsValid(InvalidBoth.AsSpan());
+        Assert.That(isValid, Is.False);
+        Assert.That(type, Is.EqualTo(DocumentType.Unknown));
+    }
+
+    [Test]
+    public void IsValid_InvalidInput_WithHints_ReturnsFalse_AndUnknown()
+    {
+        var (isValid, type) = BrazilianDocument.IsValid(InvalidBoth, DocumentType.Unknown);
+        Assert.That(isValid, Is.False);
+        Assert.That(type, Is.EqualTo(DocumentType.Unknown));
+
+        (isValid, type) = BrazilianDocument.IsValid(InvalidBoth.AsSpan(), DocumentType.Unknown);
+        Assert.That(isValid, Is.False);
+        Assert.That(type, Is.EqualTo(DocumentType.Unknown));
+
+        (isValid, type) = BrazilianDocument.IsValid(InvalidBoth, DocumentType.Cnpj);
+        Assert.That(isValid, Is.False);
+        Assert.That(type, Is.EqualTo(DocumentType.Unknown));
+
+        (isValid, type) = BrazilianDocument.IsValid(InvalidBoth.AsSpan(), DocumentType.Cnpj);
+        Assert.That(isValid, Is.False);
+        Assert.That(type, Is.EqualTo(DocumentType.Unknown));
+
+        (isValid, type) = BrazilianDocument.IsValid(InvalidBoth, DocumentType.Cpf);
+        Assert.That(isValid, Is.False);
+        Assert.That(type, Is.EqualTo(DocumentType.Unknown));
+
+        (isValid, type) = BrazilianDocument.IsValid(InvalidBoth.AsSpan(), DocumentType.Cpf);
         Assert.That(isValid, Is.False);
         Assert.That(type, Is.EqualTo(DocumentType.Unknown));
     }
@@ -60,6 +100,10 @@ public class BrazilianDocumentTests
         var (isValid, type) = BrazilianDocument.IsValid(Ambiguous1);
         Assert.That(isValid, Is.False);
         Assert.That(type, Is.EqualTo(DocumentType.Unknown));
+
+        (isValid, type) = BrazilianDocument.IsValid(Ambiguous1.AsSpan());
+        Assert.That(isValid, Is.False);
+        Assert.That(type, Is.EqualTo(DocumentType.Unknown));
     }
 
     // ── IsValid with hint ────────────────────────────────────────────────────
@@ -68,6 +112,10 @@ public class BrazilianDocumentTests
     public void IsValid_AmbiguousInput_WithCpfHint_ReturnsTrue_AndCpf()
     {
         var (isValid, type) = BrazilianDocument.IsValid(Ambiguous1, DocumentType.Cpf);
+        Assert.That(isValid, Is.True);
+        Assert.That(type, Is.EqualTo(DocumentType.Cpf));
+
+        (isValid, type) = BrazilianDocument.IsValid(Ambiguous1.AsSpan(), DocumentType.Cpf);
         Assert.That(isValid, Is.True);
         Assert.That(type, Is.EqualTo(DocumentType.Cpf));
     }
@@ -154,6 +202,28 @@ public class BrazilianDocumentTests
     }
 
     [Test]
+    public void TryParse_InvalidInput_WithHints_ReturnsUnknown()
+    {
+        var result = BrazilianDocument.TryParse(InvalidBoth, out _, out _);
+        Assert.That(result, Is.EqualTo(DocumentType.Unknown));
+
+        result = BrazilianDocument.TryParse(InvalidBoth, out _, out _, DocumentType.Cpf);
+        Assert.That(result, Is.EqualTo(DocumentType.Unknown));
+
+        result = BrazilianDocument.TryParse(InvalidBoth, out _, out _, DocumentType.Cnpj);
+        Assert.That(result, Is.EqualTo(DocumentType.Unknown));
+
+        result = BrazilianDocument.TryParse(InvalidBoth.AsSpan(), out _, out _);
+        Assert.That(result, Is.EqualTo(DocumentType.Unknown));
+
+        result = BrazilianDocument.TryParse(InvalidBoth.AsSpan(), out _, out _, DocumentType.Cpf);
+        Assert.That(result, Is.EqualTo(DocumentType.Unknown));
+
+        result = BrazilianDocument.TryParse(InvalidBoth.AsSpan(), out _, out _, DocumentType.Cnpj);
+        Assert.That(result, Is.EqualTo(DocumentType.Unknown));
+    }
+
+    [Test]
     public void TryParse_AmbiguousInput_WithNoHint_ReturnsUnknown()
     {
         var result = BrazilianDocument.TryParse(Ambiguous1, out _, out _);
@@ -165,9 +235,14 @@ public class BrazilianDocumentTests
     {
         // Without hint → ambiguous
         Assert.That(BrazilianDocument.TryParse(Ambiguous1, out _, out _), Is.EqualTo(DocumentType.Unknown));
+        Assert.That(BrazilianDocument.TryParse(Ambiguous1.AsSpan(), out _, out _), Is.EqualTo(DocumentType.Unknown));
 
         // With Cpf hint → CPF wins
         var result = BrazilianDocument.TryParse(Ambiguous1, out var cpf, out _, DocumentType.Cpf);
+        Assert.That(result, Is.EqualTo(DocumentType.Cpf));
+        Assert.That(cpf, Is.EqualTo(Cpf.Parse(Ambiguous1)));
+
+        result = BrazilianDocument.TryParse(Ambiguous1.AsSpan(), out cpf, out _, DocumentType.Cpf);
         Assert.That(result, Is.EqualTo(DocumentType.Cpf));
         Assert.That(cpf, Is.EqualTo(Cpf.Parse(Ambiguous1)));
     }
@@ -176,6 +251,10 @@ public class BrazilianDocumentTests
     public void TryParse_AmbiguousInput_WithCnpjHint_ReturnsCnpj()
     {
         var result = BrazilianDocument.TryParse(Ambiguous1, out _, out var cnpj, DocumentType.Cnpj);
+        Assert.That(result, Is.EqualTo(DocumentType.Cnpj));
+        Assert.That(cnpj, Is.EqualTo(Cnpj.Parse(Ambiguous1)));
+
+        result = BrazilianDocument.TryParse(Ambiguous1.AsSpan(), out _, out cnpj, DocumentType.Cnpj);
         Assert.That(result, Is.EqualTo(DocumentType.Cnpj));
         Assert.That(cnpj, Is.EqualTo(Cnpj.Parse(Ambiguous1)));
     }

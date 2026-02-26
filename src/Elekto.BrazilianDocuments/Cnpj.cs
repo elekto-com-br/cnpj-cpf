@@ -1,6 +1,7 @@
 // Copyright (c) 2013-2026 Elekto Produtos Financeiros. Licensed under the MIT License.
 
 using System.Diagnostics.Contracts;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -27,6 +28,10 @@ namespace Elekto.BrazilianDocuments;
 /// <item>Elemar Junior - <see href="https://elemarjr.com/arquivo/validando-cnpj-respeitando-o-garbage-collector/"/></item>
 /// </list>
 /// </para>
+/// <para>
+/// This struct is decorated with <see cref="DataContractAttribute"/> to support serialization
+/// in legacy WCF/SOAP scenarios.
+/// </para>
 /// </remarks>
 /// <example>
 /// <code>
@@ -45,6 +50,7 @@ namespace Elekto.BrazilianDocuments;
 /// </code>
 /// </example>
 [JsonConverter(typeof(CnpjJsonConverter))]
+[DataContract(Name = "Cnpj", Namespace = "https://elekto.com.br/types")]
 public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, IFormattable
 {
     // Multipliers for check digit calculation
@@ -59,7 +65,17 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
     /// <summary>
     /// In the clean representation (without punctuation), the CNPJ has 14 characters, e.g., 00ZHMRO3VI7K43
     /// </summary>
+    [DataMember(Name = "Value")]
     private readonly string _cnpj;
+
+    [OnDeserialized]
+    private void OnDeserialized(StreamingContext context)
+    {
+        if (string.IsNullOrWhiteSpace(_cnpj) || _cnpj.Length != 14 || !Validate(_cnpj))
+        {
+            throw new BadDocumentException(_cnpj ?? string.Empty, DocumentType.Cnpj);
+        }
+    }
 
     private const int MaxInputLength = 18;
 
@@ -618,7 +634,7 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
     /// <returns>A formatted string representation of the CNPJ.</returns>
     public string ToString(string? format, IFormatProvider? formatProvider)
     {
-        return ToString(string.IsNullOrWhiteSpace(format) ? "G" : format!);
+        return ToString(string.IsNullOrWhiteSpace(format) ? "G" : format);
     }
 
     /// <summary>
