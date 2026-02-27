@@ -44,6 +44,18 @@ public class BrazilianDocumentTests
         (isValid, type) = BrazilianDocument.IsValid(ValidCnpjOnly.AsSpan());
         Assert.That(isValid, Is.True);
         Assert.That(type, Is.EqualTo(DocumentType.Cnpj));
+
+        (isValid, type) = BrazilianDocument.IsValid(ValidCnpjOnly.AsSpan(), DocumentType.Unknown);
+        Assert.That(isValid, Is.True);
+        Assert.That(type, Is.EqualTo(DocumentType.Cnpj));
+
+        (isValid, type) = BrazilianDocument.IsValid(ValidCnpjOnly.AsSpan(), DocumentType.Cpf);
+        Assert.That(isValid, Is.True);
+        Assert.That(type, Is.EqualTo(DocumentType.Cnpj));
+
+        (isValid, type) = BrazilianDocument.IsValid(ValidCnpjOnly.AsSpan(), DocumentType.Cnpj);
+        Assert.That(isValid, Is.True);
+        Assert.That(type, Is.EqualTo(DocumentType.Cnpj));
     }
 
     [Test]
@@ -166,6 +178,18 @@ public class BrazilianDocumentTests
         var (isValid, type) = BrazilianDocument.IsValid(ValidCpfOnly.AsSpan());
         Assert.That(isValid, Is.True);
         Assert.That(type, Is.EqualTo(DocumentType.Cpf));
+
+        (isValid, type) = BrazilianDocument.IsValid(ValidCpfOnly.AsSpan(), DocumentType.Unknown);
+        Assert.That(isValid, Is.True);
+        Assert.That(type, Is.EqualTo(DocumentType.Cpf));
+
+        (isValid, type) = BrazilianDocument.IsValid(ValidCpfOnly.AsSpan(), DocumentType.Cpf);
+        Assert.That(isValid, Is.True);
+        Assert.That(type, Is.EqualTo(DocumentType.Cpf));
+
+        (isValid, type) = BrazilianDocument.IsValid(ValidCpfOnly.AsSpan(), DocumentType.Cnpj);
+        Assert.That(isValid, Is.True);
+        Assert.That(type, Is.EqualTo(DocumentType.Cpf));
     }
 
     [Test]
@@ -285,6 +309,38 @@ public class BrazilianDocumentTests
         var result = BrazilianDocument.TryParse(ValidCpfOnly.AsSpan(), out var cpf, out _);
         Assert.That(result, Is.EqualTo(DocumentType.Cpf));
         Assert.That(cpf, Is.EqualTo(Cpf.Parse(ValidCpfOnly)));
+
+        result = BrazilianDocument.TryParse(ValidCpfOnly.AsSpan(), out cpf, out _, DocumentType.Unknown);
+        Assert.That(result, Is.EqualTo(DocumentType.Cpf));
+        Assert.That(cpf, Is.EqualTo(Cpf.Parse(ValidCpfOnly)));
+
+        result = BrazilianDocument.TryParse(ValidCpfOnly.AsSpan(), out cpf, out _, DocumentType.Cpf);
+        Assert.That(result, Is.EqualTo(DocumentType.Cpf));
+        Assert.That(cpf, Is.EqualTo(Cpf.Parse(ValidCpfOnly)));
+
+        result = BrazilianDocument.TryParse(ValidCpfOnly.AsSpan(), out cpf, out _, DocumentType.Cnpj);
+        Assert.That(result, Is.EqualTo(DocumentType.Cpf));
+        Assert.That(cpf, Is.EqualTo(Cpf.Parse(ValidCpfOnly)));
+    }
+
+    [Test]
+    public void TryParse_Span_UnambiguousCnpj_ReturnsCnpj()
+    {
+        var result = BrazilianDocument.TryParse(ValidCnpjOnly.AsSpan(), out _, out var cnpj);
+        Assert.That(result, Is.EqualTo(DocumentType.Cnpj));
+        Assert.That(cnpj, Is.EqualTo(Cnpj.Parse(ValidCnpjOnly)));
+        
+        result = BrazilianDocument.TryParse(ValidCnpjOnly.AsSpan(), out _, out cnpj, DocumentType.Unknown);
+        Assert.That(result, Is.EqualTo(DocumentType.Cnpj));
+        Assert.That(cnpj, Is.EqualTo(Cnpj.Parse(ValidCnpjOnly)));
+
+        result = BrazilianDocument.TryParse(ValidCnpjOnly.AsSpan(), out _, out cnpj, DocumentType.Cpf);
+        Assert.That(result, Is.EqualTo(DocumentType.Cnpj));
+        Assert.That(cnpj, Is.EqualTo(Cnpj.Parse(ValidCnpjOnly)));
+        
+        result = BrazilianDocument.TryParse(ValidCnpjOnly.AsSpan(), out _, out cnpj, DocumentType.Cnpj);
+        Assert.That(result, Is.EqualTo(DocumentType.Cnpj));
+        Assert.That(cnpj, Is.EqualTo(Cnpj.Parse(ValidCnpjOnly)));
     }
 
     [Test]

@@ -1,11 +1,13 @@
 // Copyright (c) 2013-2026 Elekto Produtos Financeiros. Licensed under the MIT License.
 
-using System.Diagnostics;
 using System.Diagnostics.Contracts;
 using System.Globalization;
-using System.Runtime.Serialization;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Xml;
+using System.Xml.Schema;
+using System.Xml.Serialization;
 
 namespace Elekto.BrazilianDocuments;
 
@@ -22,8 +24,8 @@ namespace Elekto.BrazilianDocuments;
 /// and fast comparisons. Validation is performed using zero-allocation techniques.
 /// </para>
 /// <para>
-/// This struct is decorated with <see cref="DataContractAttribute"/> to support serialization
-/// in legacy WCF/SOAP scenarios.
+/// This struct implements <see cref="IXmlSerializable"/> to support serialization
+/// in legacy WCF/SOAP and XML scenarios.
 /// </para>
 /// </remarks>
 /// <example>
@@ -44,8 +46,8 @@ namespace Elekto.BrazilianDocuments;
 /// </example>
 [CLSCompliant(true)]
 [JsonConverter(typeof(CpfJsonConverter))]
-[DataContract(Name = "Cpf", Namespace = "https://elekto.com.br/types")]
-public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFormattable
+[XmlSchemaProvider(nameof(GetCpfSchema))]
+public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFormattable, IXmlSerializable
 {
     /// <summary>
     /// A valid but empty CPF (all zeros).
@@ -57,17 +59,7 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFo
     /// </summary>
     private const long MaxValue = 99_999_999_999L;
 
-    [DataMember(Name = "Value")]
     private readonly long _cpf;
-
-    [OnDeserialized]
-    private void OnDeserialized(StreamingContext context)
-    {
-        if (!IsValidNumber(_cpf))
-        {
-            throw new BadDocumentException(_cpf.ToString(), DocumentType.Cpf);
-        }
-    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Cpf"/> struct from a string.
@@ -76,7 +68,12 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFo
     /// <exception cref="BadDocumentException">Thrown when <paramref name="cpf"/> is not a valid CPF.</exception>
     public Cpf(string cpf)
     {
-        if (!TryConvertToNumber(cpf, out var number) || !IsValidNumber(number))
+        if (!TryConvertToNumber(cpf, out var number))
+        {
+            throw new BadDocumentException(cpf, DocumentType.Cpf);
+        }
+
+        if (!IsValidNumber(number))
         {
             throw new BadDocumentException(cpf, DocumentType.Cpf);
         }
@@ -186,6 +183,70 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFo
             }
             return Parse(reader.GetString()!);
         }
+    }
+
+    #endregion
+
+    #region IXmlSerializable
+
+    /// <summary>
+    /// Provides the XML schema qualified name for serialization.
+    /// </summary>
+    public static XmlQualifiedName GetCpfSchema(XmlSchemaSet schemaSet)
+    {
+        const string ns = "https://elekto.com.br/types";
+        var schema = new XmlSchema { TargetNamespace = ns };
+        var type = new XmlSchemaSimpleType { Name = "Cpf" };
+        type.Content = new XmlSchemaSimpleTypeRestriction
+        {
+            BaseTypeName = new XmlQualifiedName("long", XmlSchema.Namespace)
+        };
+        schema.Items.Add(type);
+        schemaSet.Add(schema);
+        return new XmlQualifiedName("Cpf", ns);
+    }
+
+    /// <inheritdoc />
+    XmlSchema? IXmlSerializable.GetSchema() => null;
+
+    /// <inheritdoc />
+    void IXmlSerializable.ReadXml(XmlReader reader)
+    {
+        if (reader.IsEmptyElement)
+        {
+            reader.Read();
+            throw new BadDocumentException(string.Empty, DocumentType.Cpf);
+        }
+
+        reader.ReadStartElement();
+
+        string text;
+        if (reader.NodeType == XmlNodeType.Element)
+        {
+            // Legacy DataContract format: <Cpf><Value>...</Value></Cpf>
+            text = reader.ReadElementContentAsString();
+            reader.ReadEndElement();
+        }
+        else
+        {
+            // Direct text format: <Cpf>value</Cpf>
+            text = reader.ReadContentAsString();
+            reader.ReadEndElement();
+        }
+
+        if (!long.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var value) || !IsValidNumber(value))
+        {
+            throw new BadDocumentException(text, DocumentType.Cpf);
+        }
+
+        // Use Unsafe to set the readonly field since we're guaranteed to be the only one accessing this instance during deserialization
+        Unsafe.AsRef(in this) = new Cpf(value);
+    }
+
+    /// <inheritdoc />
+    void IXmlSerializable.WriteXml(XmlWriter writer)
+    {
+        writer.WriteString(_cpf.ToString(CultureInfo.InvariantCulture));
     }
 
     #endregion
@@ -565,7 +626,7 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFo
     /// Converts the CPF to a string representation using the specified format and format provider.
     /// </summary>
     /// <param name="format">The format specifier.</param>
-    /// <param name="formatProvider">An object that supplies culture-specific formatting information.</param>
+    /// <param name="formatProvider">Will be ignored.</param>
     /// <returns>A formatted string representation of the CPF.</returns>
     public string ToString(string? format, IFormatProvider? formatProvider)
     {

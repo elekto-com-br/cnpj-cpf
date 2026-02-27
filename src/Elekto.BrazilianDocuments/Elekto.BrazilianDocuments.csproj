@@ -10,7 +10,7 @@
 
     <!-- NuGet Package Configuration -->
     <PackageId>Elekto.BrazilianDocuments</PackageId>
-    <Version>1.1.0</Version>
+    <Version>1.1.1</Version>
     <Authors>Elekto Produtos Financeiros</Authors>
     <Company>Elekto</Company>
     <Description>High-performance, zero-allocation validation for Brazilian documents (CNPJ and CPF). Supports the new alphanumeric CNPJ format introduced by Brazilian Federal Revenue Service.</Description>
@@ -38,6 +38,7 @@
   <!-- Polyfill for netstandard2.0 -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
     <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
   </ItemGroup>
 
 </Project>

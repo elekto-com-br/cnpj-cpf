@@ -16,7 +16,7 @@ High-performance, zero-allocation validation library for Brazilian documents (CN
 - **Always-Valid Types**: `Cnpj` and `Cpf` structs that guarantee validity at construction time
 - **Multiple Formats**: Parse and format documents in various representations
 - **JSON Serialization**: Built-in `System.Text.Json` support with custom converters
-- **XML Serialization**: Built-in `DataContractSerializer` support for WCF/SOAP scenarios
+- **XML Serialization**: Built-in XML serializer support for WCF/SOAP scenarios
 - **Multi-Target**: Supports .NET 8, .NET 9 .NET 10, and .NET Standard 2.0
 
 ## Background: CPF and CNPJ

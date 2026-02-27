@@ -1,5 +1,6 @@
-using System.Text.Json;
 using NUnit.Framework;
+using System.Globalization;
+using System.Text.Json;
 
 namespace Elekto.BrazilianDocuments.Tests;
 
@@ -268,6 +269,17 @@ public class CnpjTests
     {
         var cnpj = new Cnpj("09358105000191");
         Assert.That(cnpj.ToString(), Is.EqualTo("09.358.105/0001-91"));
+
+        // The culture should not affect the default formatting since it doesn't use culture-specific patterns
+        Assert.That(cnpj.ToString(null, null), Is.EqualTo("09.358.105/0001-91"));
+        Assert.That(cnpj.ToString(null, CultureInfo.CurrentCulture), Is.EqualTo("09.358.105/0001-91"));
+        Assert.That(cnpj.ToString(null, CultureInfo.GetCultureInfo("pt-BR")), Is.EqualTo("09.358.105/0001-91"));
+
+        // Blank or whitespace format should also default to "G"
+        Assert.That(cnpj.ToString(null, null), Is.EqualTo("09.358.105/0001-91"));
+        Assert.That(cnpj.ToString("", null), Is.EqualTo("09.358.105/0001-91"));
+        Assert.That(cnpj.ToString("   ", null), Is.EqualTo("09.358.105/0001-91"));
+
     }
 
     [Test]

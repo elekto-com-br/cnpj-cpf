@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using NUnit.Framework;
 
@@ -68,6 +69,10 @@ public class CpfTests
     public void Constructor_WithInvalidCpfString_ShouldThrowBadDocumentException()
     {
         Assert.That(() => new Cpf("12345678900"),
+            Throws.TypeOf<BadDocumentException>()
+                .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cpf));
+
+        Assert.That(() => new Cpf("123456789XX"),
             Throws.TypeOf<BadDocumentException>()
                 .With.Property(nameof(BadDocumentException.SourceType)).EqualTo(DocumentType.Cpf));
     }
@@ -314,6 +319,16 @@ public class CpfTests
     {
         var cpf = new Cpf(12345678909L);
         Assert.That(cpf.ToString(), Is.EqualTo("123.456.789-09"));
+
+        // The culture should not affect the default formatting since it doesn't use culture-specific patterns
+        Assert.That(cpf.ToString(null, null), Is.EqualTo("123.456.789-09"));
+        Assert.That(cpf.ToString(null, CultureInfo.CurrentCulture), Is.EqualTo("123.456.789-09"));
+        Assert.That(cpf.ToString(null, CultureInfo.GetCultureInfo("pt-BR")), Is.EqualTo("123.456.789-09"));
+
+        // Blank or whitespace format should also default to "G"
+        Assert.That(cpf.ToString("", null), Is.EqualTo("123.456.789-09"));
+        Assert.That(cpf.ToString(string.Empty, null), Is.EqualTo("123.456.789-09"));
+        Assert.That(cpf.ToString("   ", null), Is.EqualTo("123.456.789-09"));
     }
 
     [Test]
@@ -678,6 +693,7 @@ public class CpfTests
     public void TryParse_ReadOnlySpan_WithInvalidCpf_ShouldReturnFalse()
     {
         Assert.That(Cpf.TryParse("12345678900".AsSpan(), out _), Is.False);
+        Assert.That(Cpf.TryParse("123456789XX".AsSpan(), out _), Is.False);
     }
 
     [Test]

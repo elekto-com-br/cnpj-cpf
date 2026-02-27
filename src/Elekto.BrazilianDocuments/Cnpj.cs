@@ -1,10 +1,13 @@
 // Copyright (c) 2013-2026 Elekto Produtos Financeiros. Licensed under the MIT License.
 
 using System.Diagnostics.Contracts;
-using System.Runtime.Serialization;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Xml;
+using System.Xml.Schema;
+using System.Xml.Serialization;
 
 namespace Elekto.BrazilianDocuments;
 
@@ -29,8 +32,8 @@ namespace Elekto.BrazilianDocuments;
 /// </list>
 /// </para>
 /// <para>
-/// This struct is decorated with <see cref="DataContractAttribute"/> to support serialization
-/// in legacy WCF/SOAP scenarios.
+/// This struct implements <see cref="IXmlSerializable"/> to support serialization
+/// in legacy WCF/SOAP and XML scenarios.
 /// </para>
 /// </remarks>
 /// <example>
@@ -51,8 +54,8 @@ namespace Elekto.BrazilianDocuments;
 /// </example>
 [CLSCompliant(true)]
 [JsonConverter(typeof(CnpjJsonConverter))]
-[DataContract(Name = "Cnpj", Namespace = "https://elekto.com.br/types")]
-public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, IFormattable
+[XmlSchemaProvider(nameof(GetCnpjSchema))]
+public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, IFormattable, IXmlSerializable
 {
     // Multipliers for check digit calculation
     private static readonly int[] Multiplier1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
@@ -66,17 +69,7 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
     /// <summary>
     /// In the clean representation (without punctuation), the CNPJ has 14 characters, e.g., 00ZHMRO3VI7K43
     /// </summary>
-    [DataMember(Name = "Value")]
     private readonly string _cnpj;
-
-    [OnDeserialized]
-    private void OnDeserialized(StreamingContext context)
-    {
-        if (string.IsNullOrWhiteSpace(_cnpj) || _cnpj.Length != 14 || !Validate(_cnpj))
-        {
-            throw new BadDocumentException(_cnpj ?? string.Empty, DocumentType.Cnpj);
-        }
-    }
 
     private const int MaxInputLength = 18;
 
@@ -238,6 +231,70 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
             }
             return Parse(reader.GetString()!);
         }
+    }
+
+    #endregion
+
+    #region IXmlSerializable
+
+    /// <summary>
+    /// Provides the XML schema qualified name for serialization.
+    /// </summary>
+    public static XmlQualifiedName GetCnpjSchema(XmlSchemaSet schemaSet)
+    {
+        const string ns = "https://elekto.com.br/types";
+        var schema = new XmlSchema { TargetNamespace = ns };
+        var type = new XmlSchemaSimpleType { Name = "Cnpj" };
+        type.Content = new XmlSchemaSimpleTypeRestriction
+        {
+            BaseTypeName = new XmlQualifiedName("string", XmlSchema.Namespace)
+        };
+        schema.Items.Add(type);
+        schemaSet.Add(schema);
+        return new XmlQualifiedName("Cnpj", ns);
+    }
+
+    /// <inheritdoc />
+    XmlSchema? IXmlSerializable.GetSchema() => null;
+
+    /// <inheritdoc />
+    void IXmlSerializable.ReadXml(XmlReader reader)
+    {
+        if (reader.IsEmptyElement)
+        {
+            reader.Read();
+            throw new BadDocumentException(string.Empty, DocumentType.Cnpj);
+        }
+
+        reader.ReadStartElement();
+
+        string value;
+        if (reader.NodeType == XmlNodeType.Element)
+        {
+            // Legacy DataContract format: <Cnpj><Value>...</Value></Cnpj>
+            value = reader.ReadElementContentAsString();
+            reader.ReadEndElement();
+        }
+        else
+        {
+            // Direct text format: <Cnpj>text</Cnpj>
+            value = reader.ReadContentAsString();
+            reader.ReadEndElement();
+        }
+
+        if (string.IsNullOrWhiteSpace(value) || value.Length != 14 || !Validate(value))
+        {
+            throw new BadDocumentException(value, DocumentType.Cnpj);
+        }
+
+        // Use Unsafe to set the readonly field during deserialization
+        Unsafe.AsRef(in this) = new Cnpj(value, skipValidation: true);
+    }
+
+    /// <inheritdoc />
+    void IXmlSerializable.WriteXml(XmlWriter writer)
+    {
+        writer.WriteString(_cnpj);
     }
 
     #endregion
@@ -637,7 +694,7 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
     /// Converts the CNPJ to a string representation using the specified format and format provider.
     /// </summary>
     /// <param name="format">The format specifier.</param>
-    /// <param name="formatProvider">An object that supplies culture-specific formatting information.</param>
+    /// <param name="formatProvider">Will be ignored.</param>
     /// <returns>A formatted string representation of the CNPJ.</returns>
     public string ToString(string? format, IFormatProvider? formatProvider)
     {
