@@ -47,7 +47,7 @@ A CNPJ has **14 characters** in the format `RR.RRR.RRR/BBBB-DD`:
 Both CPF and CNPJ use a **weighted modulo-11** algorithm for check digit validation:
 
 1. Each character in the base number is assigned a positional weight
-2. Each character value is multiplied by its weight (for alphanumeric CNPJ, A=10, B=11, ..., Z=35)
+2. Each character value is multiplied by its weight (for alphanumeric CNPJ, A=17, B=18, ..., Z=42)
 3. The products are summed
 4. The remainder of dividing the sum by 11 determines the check digit:
    - If the remainder is less than 2, the check digit is **0**
