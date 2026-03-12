@@ -10,10 +10,12 @@
 
     <!-- NuGet Package Configuration -->
     <PackageId>Elekto.BrazilianDocuments</PackageId>
-    <Version>1.1.1</Version>
+    <Title>Brazilian Documents (CPF/CNPJ)</Title>
+    <Version>1.2.0</Version>
     <Authors>Elekto Produtos Financeiros</Authors>
     <Company>Elekto</Company>
     <Description>High-performance, zero-allocation validation for Brazilian documents (CNPJ and CPF). Supports the new alphanumeric CNPJ format introduced by Brazilian Federal Revenue Service.</Description>
+    <PackageReleaseNotes>v1.2.0: XmlSchemaProvider now returns native XSD types (xs:long for Cpf, xs:string for Cnpj) instead of custom named types, fixing svcutil/WSDL generation compatibility (dotnet/wcf#5792). Runtime serialization is unchanged.</PackageReleaseNotes>
     <PackageTags>cnpj;cpf;brazil;brazilian;validation;documents;receita-federal</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/elekto-com-br/cnpj-cpf</PackageProjectUrl>

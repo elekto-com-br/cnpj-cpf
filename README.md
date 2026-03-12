@@ -181,8 +181,9 @@ var numeric = Cnpj.Parse("09.358.105/0001-91");
 var alpha = Cnpj.Parse("12.ABC.345/01DE-35");
 
 // "Fun" CNPJs are valid!
-var elekto = Cnpj.Create("ELEKTO", "0001");  // 00.ELE.KTO/0001-40
-var error = Cnpj.Create("ERRADO", "ERRO");   // 00.ERR.ADO/ERRO-51 (Portuguese for "ERROR")
+var elekto = Cnpj.Create("ELEKTO", "0001");   // 00.ELE.KTO/0001-40
+var motto  = Cnpj.Create("BEUNGOVE", "RNBL"); // BE.UNG.OVE/RNBL-36 (Even if doing taxes...)
+var molon  = Cnpj.Create("MOLONLAB", "E001"); // MO.LON.LAB/E001-06 (Μολὼν λαβέ)
 ```
 
 The validation algorithm correctly handles:

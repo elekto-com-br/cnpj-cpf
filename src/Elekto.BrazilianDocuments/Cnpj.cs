@@ -242,16 +242,11 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
     /// </summary>
     public static XmlQualifiedName GetCnpjSchema(XmlSchemaSet schemaSet)
     {
-        const string ns = "https://elekto.com.br/types";
-        var schema = new XmlSchema { TargetNamespace = ns };
-        var type = new XmlSchemaSimpleType { Name = "Cnpj" };
-        type.Content = new XmlSchemaSimpleTypeRestriction
-        {
-            BaseTypeName = new XmlQualifiedName("string", XmlSchema.Namespace)
-        };
-        schema.Items.Add(type);
-        schemaSet.Add(schema);
-        return new XmlQualifiedName("Cnpj", ns);
+        // Returns xs:string directly so that svcutil/WSDL generation works without
+        // requiring the tool to resolve a custom schema type at code-generation time.
+        // Runtime serialization still uses IXmlSerializable.ReadXml/WriteXml.
+        // See: https://github.com/dotnet/wcf/issues/5792
+        return new XmlQualifiedName("string", XmlSchema.Namespace);
     }
 
     /// <inheritdoc />

@@ -194,16 +194,11 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFo
     /// </summary>
     public static XmlQualifiedName GetCpfSchema(XmlSchemaSet schemaSet)
     {
-        const string ns = "https://elekto.com.br/types";
-        var schema = new XmlSchema { TargetNamespace = ns };
-        var type = new XmlSchemaSimpleType { Name = "Cpf" };
-        type.Content = new XmlSchemaSimpleTypeRestriction
-        {
-            BaseTypeName = new XmlQualifiedName("long", XmlSchema.Namespace)
-        };
-        schema.Items.Add(type);
-        schemaSet.Add(schema);
-        return new XmlQualifiedName("Cpf", ns);
+        // Returns xs:long directly so that svcutil/WSDL generation works without
+        // requiring the tool to resolve a custom schema type at code-generation time.
+        // Runtime serialization still uses IXmlSerializable.ReadXml/WriteXml.
+        // See: https://github.com/dotnet/wcf/issues/5792
+        return new XmlQualifiedName("long", XmlSchema.Namespace);
     }
 
     /// <inheritdoc />
