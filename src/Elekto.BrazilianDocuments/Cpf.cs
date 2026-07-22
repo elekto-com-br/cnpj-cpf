@@ -57,7 +57,7 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFo
     /// <summary>
     /// Maximum valid CPF value (99999999999 = 11 nines).
     /// </summary>
-    private const long MaxValue = 99_999_999_999L;
+    private const long MaxValue = 999_999_999_99L;
 
     private readonly long _cpf;
 
@@ -518,13 +518,15 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFo
         // Allow some extra room for unusual formatting, but cap at reasonable limit
         if (input.Length > 20)
             return false;
-
+        
         // Fast path: try parsing directly if no punctuation
-        if (input.Length == 11 && !ContainsPunctuation(input))
+        if (input.Length <= 14 && !ContainsPunctuation(input))
         {
-            return long.TryParse(input, out cpf);
+            if (!long.TryParse(input, out cpf)) return false;
+            if (cpf <= MaxValue) return true;
+            return false;
         }
-
+        
         return TryConvertToNumber(input.AsSpan(), out cpf);
     }
 
@@ -539,29 +541,32 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFo
         if (input.Length > 20)
             return false;
 
-        // Slow path: remove punctuation
-        // Count digits first to pre-check
-        var digitCount = 0;
-        foreach (var c in input)
-        {
-            if (c is >= '0' and <= '9')
-                digitCount++;
-            else if (c is not '.' and not '-' and not ',' and not ';' and not '\\')
-                return false; // Invalid character
-        }
-
-        if (digitCount is < 1 or > 11)
-            return false;
-
-        // Build number without allocation
+        // Slow path: strip punctuation and build the number in a single pass.
+        // The accumulator is compared against MaxValue instead of counting digits so
+        // that excess leading zeros are ignored: they keep the value at 0, while any
+        // input carrying more than 11 significant digits grows past MaxValue and is
+        // rejected. This also allows a CPF punctuated like a CNPJ (e.g. "098.765/4321-00")
+        // as long as the significant part fits a CPF. The early bail-out on MaxValue
+        // guarantees the accumulator never overflows.
         long result = 0;
+        var hasDigit = false;
         foreach (var c in input)
         {
             if (c is >= '0' and <= '9')
             {
+                hasDigit = true;
                 result = result * 10 + (c - '0');
+                if (result > MaxValue)
+                    return false; // More than 11 significant digits: not a CPF
+            }
+            else if (c is not '.' and not '-' and not ',' and not ';' and not '\\' and not '/')
+            {
+                return false; // Invalid character
             }
         }
+
+        if (!hasDigit)
+            return false;
 
         cpf = result;
         return true;
@@ -576,7 +581,7 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFo
     {
         foreach (var c in s)
         {
-            if (c is '.' or '-' or ',' or ';' or '\\')
+            if (c is '.' or '-' or ',' or ';' or '\\' or '/')
                 return true;
         }
         return false;

@@ -20,8 +20,21 @@ public class CpfTests
         "111.222.333-96",
         "11122233396",
         "999.888.777-14",
-        "000.000.000-00",
+
+        // Yep, the math says it's valid
+        "000.000.000-00",   
         "00000000000",
+
+        // Using 12 to 14 numbers, like a bare CNPJ, with zeros on the start
+        "00098765432100",       
+        "0098765432100",        
+        "098765432100",
+
+        // Formated like a CNPJ, with zeros on the start 🤦🏻‍
+        "00.098.765/4321-00",   
+        "0.098.765/4321-00",    
+        "098.765/4321-00",      
+        "98.765/4321-00",       
     ];
 
     private static readonly string[] InvalidCpfs =
