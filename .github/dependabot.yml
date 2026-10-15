@@ -1,0 +1,43 @@
+# Actions are pinned by commit SHA and NuGet packages by the packages.lock.json files, so nothing new
+# arrives by itself: Dependabot proposes it in a pull request, where CI runs first. It updates the
+# SHA together with its version comment, and the lock files together with the package version.
+# The cooldown holds a new release back for a week, time for a compromised one to be found and pulled.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: build
+      include: scope
+    groups:
+      actions:
+        patterns:
+          - '*'
+
+  # The test and benchmark packages never reach the library's users, so their minor and patch
+  # updates come together. Everything else comes in a pull request of its own: a major version, and
+  # any update of a package the library depends on (System.Text.Json and
+  # System.Runtime.CompilerServices.Unsafe, for netstandard2.0), which raises what its users get.
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: build
+      include: scope
+    groups:
+      test-and-benchmark:
+        patterns:
+          - 'BenchmarkDotNet*'
+          - 'coverlet.*'
+          - 'Microsoft.NET.Test.Sdk'
+          - 'NUnit*'
+        update-types:
+          - minor
+          - patch
