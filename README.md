@@ -313,6 +313,16 @@ Key design decisions behind the numbers:
 - **Early exit**: length and character-class guards reject invalid inputs before any arithmetic is performed
 - **Compact storage**: `Cpf` stores the document as a single `long`; `Cnpj` as a pre-normalized 14-character string
 
+## Verifying a Package
+
+Releases are built, tested and packed by GitHub Actions from the tagged commit, and pushed to nuget.org by a separate job through [Trusted Publishing](https://learn.microsoft.com/nuget/nuget-org/trusted-publishing), with no stored API key. The package and symbol package attached to each [GitHub Release](https://github.com/elekto-com-br/cnpj-cpf/releases) carry a build provenance attestation, which the GitHub CLI checks:
+
+```bash
+gh attestation verify Elekto.BrazilianDocuments.<version>.nupkg --repo elekto-com-br/cnpj-cpf
+```
+
+nuget.org adds its own repository signature to the copy it serves, so verify the copy from the GitHub Release.
+
 ## Credits
 
 The zero-allocation CNPJ validation algorithm is based on work by:

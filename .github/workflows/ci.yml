@@ -6,21 +6,28 @@ on:
   pull_request:
     branches: [ master, main ]
 
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
   test:
     name: Build & Test
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      # Actions are pinned by commit, with the release in a comment; Dependabot proposes new ones
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: |
-            8.x
-            9.x
-            10.x
+          dotnet-version: 10.x
 
       # Locked mode restores exactly the packages in the packages.lock.json files, or fails
       - name: Restore
@@ -32,8 +39,49 @@ jobs:
       - name: Test
         run: dotnet test --no-build -c Release --logger "console;verbosity=normal" --collect:"XPlat Code Coverage" --results-directory ./coverage
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v4
+      # The publish workflow packs and checks the package with these same two steps. Doing it here as
+      # well finds a broken package on the pull request rather than at release time.
+      - name: Pack
+        run: dotnet pack src/Elekto.BrazilianDocuments/Elekto.BrazilianDocuments.csproj --no-build -c Release -o ./dist
+
+      - name: Verify the package
+        run: bash .github/scripts/verify-package.sh ./dist
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          files: ./coverage/**/coverage.cobertura.xml
-          token: ${{ secrets.CODECOV_TOKEN }}
+          name: coverage
+          path: coverage/*/coverage.cobertura.xml
+          if-no-files-found: error
+          retention-days: 7
+
+  # Sends the coverage report to Codecov from a job of its own, which runs no code from the
+  # repository or from NuGet. It logs in to Codecov with an OIDC token, so no Codecov token is stored.
+  # Pull requests from forks get no OIDC token, and for them the action uploads without one, which
+  # Codecov accepts for public repositories.
+  coverage:
+    name: Upload coverage
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write   # the Codecov login
+
+    steps:
+      # The uploader reads the commit and the repository's file list from the checkout
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: coverage
+          path: coverage
+
+      # Coverage informs, it does not gate: a failed upload is flagged on the run but leaves CI green
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
+        continue-on-error: true
+        with:
+          use_oidc: true
+          directory: coverage
+          fail_ci_if_error: true
