@@ -22,8 +22,9 @@ jobs:
             9.x
             10.x
 
+      # Locked mode restores exactly the packages in the packages.lock.json files, or fails
       - name: Restore
-        run: dotnet restore
+        run: dotnet restore --locked-mode
 
       - name: Build
         run: dotnet build --no-restore -c Release

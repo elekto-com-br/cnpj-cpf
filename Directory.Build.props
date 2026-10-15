@@ -1,0 +1,12 @@
+<Project>
+
+  <!--
+    Every restore writes the exact version and content hash of each package, direct or transitive,
+    to the project's packages.lock.json. CI and the publish workflow restore in locked mode, so a
+    build that would resolve anything else fails instead.
+  -->
+  <PropertyGroup>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+</Project>
