@@ -11,11 +11,11 @@
     <!-- NuGet Package Configuration -->
     <PackageId>Elekto.BrazilianDocuments</PackageId>
     <Title>Brazilian Documents (CPF/CNPJ)</Title>
-    <Version>1.2.1</Version>
+    <Version>1.2.2</Version>
     <Authors>Elekto Produtos Financeiros</Authors>
     <Company>Elekto</Company>
     <Description>High-performance, zero-allocation validation for Brazilian documents (CNPJ and CPF). Supports the new alphanumeric CNPJ format introduced by Brazilian Federal Revenue Service.</Description>
-    <PackageReleaseNotes>v1.2.1: CPF validation now tolerates excess leading zeros, whether bare or punctuated (including CNPJ-style punctuation, e.g. "098.765/4321-00").</PackageReleaseNotes>
+    <PackageReleaseNotes>v1.2.2: No change to the library's code or dependencies. Releases are now built and published by GitHub Actions through nuget.org Trusted Publishing, with no stored API key, and the package and symbols attached to each GitHub Release carry a build provenance attestation (see "Verifying a Package" in the README).</PackageReleaseNotes>
     <PackageTags>cnpj;cpf;brazil;brazilian;validation;documents;receita-federal</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/elekto-com-br/cnpj-cpf</PackageProjectUrl>
