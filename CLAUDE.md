@@ -44,7 +44,9 @@ the SDK it names, and without the file it failed from the moment net11.0 came in
 
 Benchmarks: `dotnet run -c Release --project benchmarks/Elekto.BrazilianDocuments.Benchmarks`.
 BenchmarkDotNet 0.15.8 cannot run on .NET 11, so they target net10.0 only; from 0.16 on, they can
-target net11.0 as well and compare both runtimes with `-- --runtimes net10.0 net11.0`.
+target net11.0 as well and compare both runtimes with `-- --runtimes net10.0 net11.0`. The README
+table of 1.4.1 was measured on .NET 11 from a copy of the project moved to BenchmarkDotNet
+0.16.0-preview.2.
 
 ## Dependencies
 

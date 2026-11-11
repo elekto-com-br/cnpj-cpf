@@ -298,15 +298,15 @@ Both types are engineered for high-throughput, zero-allocation validation — sa
 
 | Document | Scenario | Throughput |
 |----------|----------|----------:|
-| CPF | Worst case (invalid check digit) | **~15.6 M/s** |
-| CPF | Mixed dataset (valid + invalid + trimmed) | **~22.9 M/s** |
-| CNPJ numeric | Worst case (invalid check digit) | **~12.7 M/s** |
-| CNPJ numeric + alphanumeric | Mixed dataset (valid + invalid + trimmed) | **~9.1 M/s** |
-| CNPJ alphanumeric | New 2026 format (valid + invalid) | **~5.3 M/s** |
+| CPF | Worst case (invalid check digit) | **~18.6 M/s** |
+| CPF | Mixed dataset (valid + invalid + trimmed) | **~23.1 M/s** |
+| CNPJ numeric | Worst case (invalid check digit) | **~23.5 M/s** |
+| CNPJ numeric + alphanumeric | Mixed dataset (valid + invalid + trimmed) | **~16.4 M/s** |
+| CNPJ alphanumeric | New 2026 format (valid + invalid) | **~7.6 M/s** |
 
-> Measured on an Intel Xeon E-2146G @ 3.50 GHz · .NET 10.0.3 · BenchmarkDotNet 0.14.0.  
+> Measured on **.NET 11.0.0** · Intel Xeon E-2146G @ 3.50 GHz · Windows 11 · BenchmarkDotNet 0.16.0-preview.2.  
 > **Allocated: 0 bytes** across all scenarios — confirmed by `[MemoryDiagnoser]`.  
-> Reproduce with: `dotnet run -c Release --project benchmarks/Elekto.BrazilianDocuments.Benchmarks`
+> Reproduce with: `dotnet run -c Release --project benchmarks/Elekto.BrazilianDocuments.Benchmarks`. The project still uses BenchmarkDotNet 0.15.8, which does not run on .NET 11, so it measures on .NET 10, with numbers close to these.
 
 Key design decisions behind the numbers:
 
