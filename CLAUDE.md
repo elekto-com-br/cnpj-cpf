@@ -1,9 +1,10 @@
 # Elekto.BrazilianDocuments
 
 C# library that validates, parses and formats Brazilian CPF and CNPJ numbers, including the
-alphanumeric CNPJ, published on NuGet as `Elekto.BrazilianDocuments`. It targets net8.0, net9.0,
-net10.0 and netstandard2.0 from one source, with no conditional compilation; for netstandard2.0 it
-depends on the System.Text.Json and System.Runtime.CompilerServices.Unsafe packages.
+alphanumeric CNPJ, published on NuGet as `Elekto.BrazilianDocuments`. It targets net10.0, net11.0
+and netstandard2.0 from one source, with no conditional compilation; for netstandard2.0, which
+serves .NET Framework and the .NET versions before 10, it depends on the System.Text.Json and
+System.Runtime.CompilerServices.Unsafe packages.
 
 ## Language
 
@@ -33,7 +34,12 @@ dotnet build -c Release
 dotnet test --no-build -c Release
 ```
 
+The tests run on net10.0 and net11.0, so they need the .NET 11 SDK and the .NET 10 runtime; the
+netstandard2.0 build is compiled but not run.
+
 Benchmarks: `dotnet run -c Release --project benchmarks/Elekto.BrazilianDocuments.Benchmarks`.
+BenchmarkDotNet 0.15.8 cannot run on .NET 11, so they target net10.0 only; from 0.16 on, they can
+target net11.0 as well and compare both runtimes with `-- --runtimes net10.0 net11.0`.
 
 ## Dependencies
 

@@ -1,6 +1,6 @@
 # Elekto.BrazilianDocuments
 
-[![.NET](https://img.shields.io/badge/.NET-8%20%7C%209%20%7C%2010-512BD4)](https://dotnet.microsoft.com)
+[![.NET](https://img.shields.io/badge/.NET-10%20%7C%2011-512BD4)](https://dotnet.microsoft.com)
 [![NuGet](https://img.shields.io/nuget/v/Elekto.BrazilianDocuments.svg)](https://www.nuget.org/packages/Elekto.BrazilianDocuments)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/Elekto.BrazilianDocuments.svg)](https://www.nuget.org/packages/Elekto.BrazilianDocuments)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -17,7 +17,7 @@ High-performance, zero-allocation validation library for Brazilian documents (CN
 - **Multiple Formats**: Parse and format documents in various representations
 - **JSON Serialization**: Built-in `System.Text.Json` support with custom converters
 - **XML Serialization**: Built-in XML serializer support for WCF/SOAP scenarios
-- **Multi-Target**: Supports .NET 8, .NET 9 .NET 10, and .NET Standard 2.0
+- **Multi-Target**: Supports .NET 10, .NET 11, and .NET Standard 2.0, which covers .NET Framework 4.6.2 and later and the .NET versions before 10
 
 ## Background: CPF and CNPJ
 
