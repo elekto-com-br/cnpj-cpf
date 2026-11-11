@@ -47,8 +47,8 @@ jobs:
 
           echo "Tag and csproj agree on ${VERSION}."
 
-      # global.json asks for SDK 11.0.100 or later, which builds every target framework; 10.x is
-      # there for its runtime, since the tests run on net10.0 as well as net11.0
+      # global.json asks for an 11.0 SDK, 11.0.100 or later, which builds every target framework;
+      # 10.x is there for its runtime, since the tests run on net10.0 as well as net11.0
       - name: Setup .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
