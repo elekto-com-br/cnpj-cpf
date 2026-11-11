@@ -115,6 +115,16 @@ public class SoapSerializationTests
 
     }
 
+    [TestCase("00elekto004218")]   // lowercase
+    [TestCase("0.ELEKTO004218")]   // a dot in place of a leading zero
+    public void Cnpj_Deserialization_ShouldNormalizeTheValue(string value)
+    {
+        var deserialized = Deserialize<Cnpj>($"""<string xmlns="">{value}</string>""");
+
+        Assert.That(deserialized.Value, Is.EqualTo("00ELEKTO004218"));
+        Assert.That(deserialized, Is.EqualTo(Cnpj.Create("ELEKTO", "0042")));
+    }
+
     [Test]
     public void Cnpj_Deserialization_WithLetterOutsideAscii_ShouldThrow()
     {

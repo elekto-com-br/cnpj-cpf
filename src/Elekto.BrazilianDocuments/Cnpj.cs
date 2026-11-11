@@ -293,8 +293,9 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
             throw new BadDocumentException(value, DocumentType.Cnpj);
         }
 
-        // Use Unsafe to set the readonly field during deserialization
-        Unsafe.AsRef(in this) = new Cnpj(value, skipValidation: true);
+        // Use Unsafe to set the readonly field during deserialization. The value may be lowercase, or
+        // have punctuation in place of a leading zero, so it is stored as the constructor stores it.
+        Unsafe.AsRef(in this) = new Cnpj(CleanAndNormalize(value), skipValidation: true);
     }
 
     /// <inheritdoc />
