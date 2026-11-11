@@ -727,6 +727,16 @@ public class CnpjTests
         Assert.That(Cnpj.IsValid("09358105000191."), Is.True);
     }
 
+    [TestCase('@')]
+    [TestCase('[')]
+    [TestCase('`')]
+    [TestCase('{')]
+    public void Validate_WithCharactersAroundTheLetters_ShouldIgnoreThem(char c)
+    {
+        // The neighbours of A-Z and a-z are not letters: counted as one, they would make 15 characters
+        Assert.That(Cnpj.IsValid("00ELE" + c + "KTO000140"), Is.True);
+    }
+
     [Test]
     public void Create_RootWithPunctuation_ShouldThrow()
     {

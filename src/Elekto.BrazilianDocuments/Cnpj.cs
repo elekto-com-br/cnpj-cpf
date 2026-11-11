@@ -57,9 +57,10 @@ namespace Elekto.BrazilianDocuments;
 [XmlSchemaProvider(nameof(GetCnpjSchema))]
 public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, IFormattable, IXmlSerializable
 {
-    // Multipliers for check digit calculation
-    private static readonly int[] Multiplier1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
-    private static readonly int[] Multiplier2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    // Multipliers for check digit calculation, as spans over data in the assembly: no allocation,
+    // and a length the JIT knows, so it can drop the bounds checks
+    private static ReadOnlySpan<byte> Multiplier1 => [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    private static ReadOnlySpan<byte> Multiplier2 => [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
 
     /// <summary>
     /// A valid but empty CNPJ (all zeros).
@@ -456,20 +457,8 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
 
     private static bool Validate(ReadOnlySpan<char> cnpj)
     {
-        if (cnpj.IsEmpty || cnpj.Length > MaxInputLength || cnpj.Length < 7)
-            return false;
-
-        var hasNonWhitespace = false;
-        foreach (var c in cnpj)
-        {
-            if (!char.IsWhiteSpace(c))
-            {
-                hasNonWhitespace = true;
-                break;
-            }
-        }
-
-        if (!hasNonWhitespace)
+        // Whitespace is not valid input, so an input of whitespace alone fails the count below
+        if (cnpj.Length is < 7 or > MaxInputLength)
             return false;
 
         var validChars = 0;
@@ -486,14 +475,14 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
             return false;
         }
 
-        var position = 0;
+        // A shorter input omits leading zeros, which add nothing to the totals. The loop only sums
+        // and keeps the two check digits it reads: with no branch to the check digit arithmetic
+        // inside it, the JIT compiles it as a plain loop over the span.
+        var position = 14 - validChars;
         var totalDigit1 = 0;
         var totalDigit2 = 0;
-
-        if (validChars < 14)
-        {
-            position = 14 - validChars;
-        }
+        var checkDigit1 = 0;
+        var checkDigit2 = 0;
 
         foreach (var c in cnpj)
         {
@@ -505,38 +494,31 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
                 digit -= 32;
             }
 
-            switch (position)
+            if ((uint)position < 12)
             {
-                case < 12:
-                    totalDigit1 += digit * Multiplier1[position];
-                    totalDigit2 += digit * Multiplier2[position];
-                    break;
-                case 12:
-                {
-                    var dv1 = totalDigit1 % 11;
-                    dv1 = dv1 < 2 ? 0 : 11 - dv1;
-                    if (digit != dv1)
-                        return false;
-                    totalDigit2 += dv1 * Multiplier2[12];
-                    break;
-                }
-                case 13:
-                {
-                    var dv2 = totalDigit2 % 11;
-                    dv2 = dv2 < 2 ? 0 : 11 - dv2;
-                    if (digit != dv2)
-                        return false;
-                    break;
-                }
+                totalDigit1 += digit * Multiplier1[position];
+                totalDigit2 += digit * Multiplier2[position];
+            }
+            else if (position == 12)
+            {
+                checkDigit1 = digit;
+            }
+            else
+            {
+                checkDigit2 = digit;
             }
 
             position++;
-
-            if (position == 14)
-                break;
         }
 
-        return position == 14;
+        var dv1 = CheckDigit(totalDigit1);
+        return checkDigit1 == dv1 && checkDigit2 == CheckDigit(totalDigit2 + dv1 * Multiplier2[12]);
+    }
+
+    private static int CheckDigit(int total)
+    {
+        var remainder = total % 11;
+        return remainder < 2 ? 0 : 11 - remainder;
     }
 
     private static (string Cnpj, byte Digits) CreateCore(string rootAndBranch)
@@ -638,14 +620,11 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
         return false;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static bool IsValidInput(char c)
     {
-        return c switch
-        {
-            >= '0' and <= '9' => true,
-            '.' or '/' or '-' or ',' or ';' or '\\' => false,
-            _ => c is >= 'A' and <= 'Z' or >= 'a' and <= 'z'
-        };
+        // A digit, or an ASCII letter of either case: setting bit 0x20 turns A-Z into a-z
+        return (uint)(c - '0') <= 9 || (uint)((c | 0x20) - 'a') <= 'z' - 'a';
     }
 
     /// <summary>
