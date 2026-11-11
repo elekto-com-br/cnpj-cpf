@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net10.0;net11.0;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0;net10.0;net11.0;netstandard2.0</TargetFrameworks>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -15,7 +15,7 @@
     <Authors>Elekto Produtos Financeiros</Authors>
     <Company>Elekto</Company>
     <Description>High-performance, zero-allocation validation for Brazilian documents (CNPJ and CPF). Supports the new alphanumeric CNPJ format introduced by Brazilian Federal Revenue Service.</Description>
-    <PackageReleaseNotes>v1.4.0: Adds a net11.0 build and drops net8.0 and net9.0, since .NET 8 and 9 left support on 10 November 2026. Apps on .NET 8 and 9 keep working on the netstandard2.0 build, the one .NET Framework 4.6.2 and later use, but it brings them the System.Text.Json 10.0.14 package, which the whole app then uses instead of the System.Text.Json of its shared framework. An app that references System.Text.Json 8.x or 9.x directly must move it to 10.0.14 or later, or restore fails on a package downgrade (NU1605). The netstandard2.0 build now depends on System.Text.Json 10.0.14 instead of 10.0.13, with Microsoft.Bcl.AsyncInterfaces, System.IO.Pipelines and System.Text.Encodings.Web 10.0.14. No change to the library's code; net10.0 and net11.0 depend on no package.</PackageReleaseNotes>
+    <PackageReleaseNotes>v1.4.0: Adds a net11.0 build. net8.0 and net9.0 stay for now, although .NET 8 and 9 left support on 10 November 2026; a later release will drop them, and apps on .NET 8 and 9 will then get the netstandard2.0 build, which brings the System.Text.Json package with it. The netstandard2.0 build, which .NET Framework 4.6.2 and later use, now depends on System.Text.Json 10.0.14 instead of 10.0.13, with Microsoft.Bcl.AsyncInterfaces, System.IO.Pipelines and System.Text.Encodings.Web 10.0.14. No change to the library's code; net8.0, net9.0, net10.0 and net11.0 depend on no package.</PackageReleaseNotes>
     <PackageTags>cnpj;cpf;brazil;brazilian;validation;documents;receita-federal</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/elekto-com-br/cnpj-cpf</PackageProjectUrl>
