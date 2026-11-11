@@ -299,8 +299,8 @@ Both types are engineered for high-throughput, zero-allocation validation — sa
 |----------|----------|----------:|
 | CPF | Worst case (invalid check digit) | **~15.6 M/s** |
 | CPF | Mixed dataset (valid + invalid + trimmed) | **~22.9 M/s** |
-| CNPJ numeric | Worst case (invalid check digit) | **~5.3 M/s** |
-| CNPJ numeric | Mixed dataset (valid + invalid + trimmed) | **~9.1 M/s** |
+| CNPJ numeric | Worst case (invalid check digit) | **~12.7 M/s** |
+| CNPJ numeric + alphanumeric | Mixed dataset (valid + invalid + trimmed) | **~9.1 M/s** |
 | CNPJ alphanumeric | New 2026 format (valid + invalid) | **~5.3 M/s** |
 
 > Measured on an Intel Xeon E-2146G @ 3.50 GHz · .NET 10.0.3 · BenchmarkDotNet 0.14.0.  
