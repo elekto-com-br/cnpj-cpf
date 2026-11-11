@@ -769,6 +769,44 @@ public class CnpjTests
         Assert.That(new Cnpj(cnpj).Value, Is.EqualTo("00ELEKTO000140"));
     }
 
+    [TestCase("  00.ELE.KTO/0001-40  ")]                 // past the 18-character limit
+    [TestCase("\t00.ELE.KTO/0001-40\r\n")]               // tab and line break
+    [TestCase("00.ELE.KTO/0001-40   ")]   // no-break spaces, which Trim removes too
+    [TestCase("00ELEKTO000140                    ")]     // a fixed-width field
+    public void Validate_WithWhitespaceAroundIt_ShouldTrimIt(string cnpj)
+    {
+        // As the constructor does, so that IsValid, TryParse and the constructor agree
+        Assert.That(Cnpj.IsValid(cnpj), Is.True);
+        Assert.That(Cnpj.IsValid(cnpj.AsSpan()), Is.True);
+        Assert.That(Cnpj.TryParse(cnpj, out var parsed), Is.True);
+        Assert.That(parsed.Value, Is.EqualTo("00ELEKTO000140"));
+        Assert.That(new Cnpj(cnpj).Value, Is.EqualTo("00ELEKTO000140"));
+    }
+
+    [Test]
+    public void Validate_WithWhitespaceInside_ShouldCountIt()
+    {
+        // Only the ends are trimmed: inside, whitespace counts towards the 18-character limit
+        Assert.That(Cnpj.IsValid("00. ELE. KTO/0001-40"), Is.False);
+        Assert.That(() => new Cnpj("00. ELE. KTO/0001-40"), Throws.TypeOf<BadDocumentException>());
+    }
+
+    [Test]
+    public void IsValid_WithWhitespaceAroundIt_ShouldNotAllocate()
+    {
+        const string padded = "    00.ELE.KTO/0001-40    ";
+        Assert.That(Cnpj.IsValid(padded), Is.True);
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 1_000; i++)
+        {
+            Cnpj.IsValid(padded);
+            Cnpj.IsValid(padded.AsSpan());
+        }
+
+        Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
+    }
+
     [Test]
     public void Create_RootWithPunctuation_ShouldThrow()
     {

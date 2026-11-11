@@ -468,9 +468,11 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
 
     private static bool Validate(ReadOnlySpan<char> cnpj)
     {
-        // Whitespace is not valid input, so an input of whitespace alone fails the count below
+        // Outside the length limits, the input may be a CNPJ with whitespace around it. Within them,
+        // whitespace is skipped below like punctuation, and an input of whitespace alone fails the
+        // count.
         if (cnpj.Length is < 7 or > MaxInputLength)
-            return false;
+            return ValidateTrimmed(cnpj);
 
         // Any other character is punctuation and is skipped, unless it is a letter or a digit outside
         // ASCII: that is no punctuation, and no CNPJ character either
@@ -530,6 +532,16 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
 
         var dv1 = CheckDigit(totalDigit1);
         return checkDigit1 == dv1 && checkDigit2 == CheckDigit(totalDigit2 + dv1 * Multiplier2[12]);
+    }
+
+    // The constructor trims the input, so leading and trailing whitespace does not count towards the
+    // length limits in validation either. Trimming slices the span, with no allocation. Kept out of
+    // Validate, which runs on every input, so that the JIT does not inline Trim there.
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static bool ValidateTrimmed(ReadOnlySpan<char> cnpj)
+    {
+        cnpj = cnpj.Trim();
+        return cnpj.Length is >= 7 and <= MaxInputLength && Validate(cnpj);
     }
 
     private static int CheckDigit(int total)
