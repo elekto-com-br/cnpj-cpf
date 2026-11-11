@@ -38,7 +38,9 @@ dotnet test --no-build -c Release
 ```
 
 The tests run on net10.0 and net11.0, so they need the .NET 11 SDK and the .NET 10 runtime; the
-net8.0, net9.0 and netstandard2.0 builds are compiled but not run.
+net8.0, net9.0 and netstandard2.0 builds are compiled but not run. `global.json` asks for SDK
+11.0.100 or later, previews excluded: GitHub's automatic dependency submission for NuGet installs
+the SDK it names, and without the file it failed from the moment net11.0 came in.
 
 Benchmarks: `dotnet run -c Release --project benchmarks/Elekto.BrazilianDocuments.Benchmarks`.
 BenchmarkDotNet 0.15.8 cannot run on .NET 11, so they target net10.0 only; from 0.16 on, they can
