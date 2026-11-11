@@ -116,6 +116,14 @@ public class SoapSerializationTests
     }
 
     [Test]
+    public void Cnpj_Deserialization_WithLetterOutsideAscii_ShouldThrow()
+    {
+        // Valid without the é, which the value used to keep
+        var xml = """<string xmlns="">0ELEKTO004218é</string>""";
+        Assert.Throws<BadDocumentException>(() => Deserialize<Cnpj>(xml));
+    }
+
+    [Test]
     public void XmlSerialization_ShouldPreserveCnpjValue()
     {
         var original = Cnpj.Create("ELEKTO", "0042");

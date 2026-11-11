@@ -737,11 +737,52 @@ public class CnpjTests
         Assert.That(Cnpj.IsValid("00ELE" + c + "KTO000140"), Is.True);
     }
 
+    [TestCase("00ELEKTO000140é")]   // é
+    [TestCase("É00ELEKTO000140")]   // É
+    [TestCase("0ELEKTO000140ç")]    // ç, with a leading zero omitted
+    [TestCase("0ELEKTO000140İ")]    // Turkish capital I with a dot
+    [TestCase("0ELEKTO000140ı")]    // Turkish dotless i
+    [TestCase("0ELEKTO000140ſ")]    // long s, which ToUpperInvariant makes an S
+    [TestCase("0ELEKTO000140K")]    // Kelvin sign
+    [TestCase("00ELÉKTO000140")]   // combining acute accent
+    [TestCase("00ELEKTO000140Ａ")]   // fullwidth A
+    [TestCase("０00ELEKTO000140")]   // fullwidth 0
+    [TestCase("٣00ELEKTO000140")]   // Arabic-Indic 3
+    [TestCase("00ELEKTO000140²")]   // superscript 2
+    public void Validate_WithLetterOrDigitOutsideAscii_ShouldBeInvalid(string cnpj)
+    {
+        // Valid without that character, which is no punctuation to skip
+        Assert.That(Cnpj.IsValid(new string(cnpj.Where(c => c < 0x80).ToArray())), Is.True);
+
+        Assert.That(Cnpj.IsValid(cnpj), Is.False);
+        Assert.That(() => new Cnpj(cnpj), Throws.TypeOf<BadDocumentException>());
+    }
+
+    [TestCase("00ELEKTO000140 ")]                // no-break space
+    [TestCase("00.ELE.KTO/0001–40")]             // en dash
+    [TestCase("00.ELE.KTO/0001‑40")]             // non-breaking hyphen
+    [TestCase("00ELEKTO0001­40")]                // soft hyphen
+    [TestCase("00．ELE．KTO／0001-40")]   // fullwidth full stop and solidus
+    public void Validate_WithPunctuationOutsideAscii_ShouldIgnoreIt(string cnpj)
+    {
+        Assert.That(Cnpj.IsValid(cnpj), Is.True);
+        Assert.That(new Cnpj(cnpj).Value, Is.EqualTo("00ELEKTO000140"));
+    }
+
     [Test]
     public void Create_RootWithPunctuation_ShouldThrow()
     {
         // Punctuation is not allowed in Create root parameter
         Assert.That(() => Cnpj.Create("12.3", "0001"), Throws.ArgumentException);
+    }
+
+    [TestCase("ELEKTÓ0001")]    // Ó
+    [TestCase("ELEKTı0001")]    // Turkish dotless i
+    [TestCase("ELEKTſ0001")]    // long s, which ToUpperInvariant makes an S
+    [TestCase("ELÉKTO0001")]   // combining acute accent
+    public void Create_FromSingleString_WithLetterOrDigitOutsideAscii_ShouldThrowArgumentException(string rootAndBranch)
+    {
+        Assert.That(() => Cnpj.Create(rootAndBranch), Throws.TypeOf<ArgumentException>());
     }
 
     private class TestCnpj

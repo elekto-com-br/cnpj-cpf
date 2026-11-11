@@ -191,6 +191,7 @@ The validation algorithm correctly handles:
 - Case-insensitive input
 - Leading zero omission (e.g., `1/0001-36` is valid)
 - Various punctuation formats
+- ASCII letters and digits only: an accented letter (`É`, `Ç`), the Turkish `İ` or `ı`, or a fullwidth or superscript digit makes the input invalid, while punctuation and spaces, ASCII or not, are ignored
 
 ## Parsing Helpers
 

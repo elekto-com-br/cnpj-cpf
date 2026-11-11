@@ -1,6 +1,7 @@
 // Copyright (c) 2013-2026 Elekto Produtos Financeiros. Licensed under the MIT License.
 
 using System.Diagnostics.Contracts;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
@@ -153,11 +154,20 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
 
     private static string CleanAndNormalize(string cnpj)
     {
-        // Remove any character that is not 0-9 or A-Z or a-z
-        cnpj = cnpj.ToUpperInvariant();
-        cnpj = new string(cnpj.Where(char.IsLetterOrDigit).ToArray());
-        cnpj = cnpj.PadLeft(14, '0');
-        return cnpj;
+        // Validate has passed, so the input holds 7 to 14 ASCII digits and letters among its
+        // punctuation; NormalizeInput upper-cases the letters and puts back the leading zeros the
+        // input left out
+        var chars = new char[14];
+        var length = 0;
+        foreach (var c in cnpj)
+        {
+            if (IsValidInput(c))
+            {
+                chars[length++] = c;
+            }
+        }
+
+        return NormalizeInput(new string(chars, 0, length), 14);
     }
 
     #region IComparable Members
@@ -461,12 +471,18 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
         if (cnpj.Length is < 7 or > MaxInputLength)
             return false;
 
+        // Any other character is punctuation and is skipped, unless it is a letter or a digit outside
+        // ASCII: that is no punctuation, and no CNPJ character either
         var validChars = 0;
         foreach (var c in cnpj)
         {
             if (IsValidInput(c))
             {
                 validChars++;
+            }
+            else if (IsNonAsciiLetterOrDigit(c))
+            {
+                return false;
             }
         }
 
@@ -526,8 +542,9 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
         if (string.IsNullOrWhiteSpace(rootAndBranch))
             throw new ArgumentNullException(nameof(rootAndBranch));
 
-        rootAndBranch = rootAndBranch.ToUpperInvariant();
-        rootAndBranch = new string(rootAndBranch.Where(char.IsLetterOrDigit).Take(12).ToArray());
+        // Drops the punctuation, but keeps a letter or digit outside ASCII for the check of the root
+        // and the branch to reject; the letters are upper-cased there, the ASCII way
+        rootAndBranch = new string(rootAndBranch.Where(c => IsValidInput(c) || IsNonAsciiLetterOrDigit(c)).Take(12).ToArray());
         rootAndBranch = rootAndBranch.PadLeft(12, '0');
 
         return CreateCore(rootAndBranch.Substring(0, 8), rootAndBranch.Substring(8, 4));
@@ -625,6 +642,15 @@ public readonly struct Cnpj : IComparable<Cnpj>, IComparable, IEquatable<Cnpj>, 
     {
         // A digit, or an ASCII letter of either case: setting bit 0x20 turns A-Z into a-z
         return (uint)(c - '0') <= 9 || (uint)((c | 0x20) - 'a') <= 'z' - 'a';
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsNonAsciiLetterOrDigit(char c)
+    {
+        // An accented letter or a combining accent, the Turkish İ and ı, a fullwidth or superscript
+        // digit, a letter or digit of another script. UnicodeCategory lists the letters first, then
+        // the marks, which are the combining accents, then the numbers.
+        return c > 0x7F && char.GetUnicodeCategory(c) <= UnicodeCategory.OtherNumber;
     }
 
     /// <summary>
