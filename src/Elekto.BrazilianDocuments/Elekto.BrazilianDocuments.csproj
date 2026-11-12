@@ -11,11 +11,11 @@
     <!-- NuGet Package Configuration -->
     <PackageId>Elekto.BrazilianDocuments</PackageId>
     <Title>Brazilian Documents (CPF/CNPJ)</Title>
-    <Version>1.4.1</Version>
+    <Version>1.4.2</Version>
     <Authors>Elekto Produtos Financeiros</Authors>
     <Company>Elekto</Company>
     <Description>High-performance, zero-allocation validation for Brazilian documents (CNPJ and CPF). Supports the new alphanumeric CNPJ format introduced by Brazilian Federal Revenue Service.</Description>
-    <PackageReleaseNotes>v1.4.1: Validating a CNPJ is about twice as fast for numeric CNPJs and 40% faster for alphanumeric ones, as measured on .NET 10 and 11. A CNPJ that holds a letter or digit outside ASCII is now invalid: an accented letter, the Turkish İ or ı, a fullwidth digit, and also a superscript digit or a combining accent. IsValid used to skip them like punctuation, while the constructor kept the letters and digits in the value, and turned the long s (ſ) into an S, which made the value an invalid CNPJ. Cnpj.Create, which already rejected accented letters, now also rejects the long s, combining accents and superscript digits. A Cnpj read from XML is now stored as the constructor stores it: written in lowercase, or with punctuation in place of a leading zero, it did not equal the same CNPJ parsed from a string. Punctuation and spaces, ASCII or not, are still ignored, and Cpf is unchanged.</PackageReleaseNotes>
+    <PackageReleaseNotes>v1.4.2: Cnpj.IsValid and Cnpj.TryParse now trim the whitespace around a CNPJ, as the constructor already did, so that a CNPJ padded past 18 characters, as in a fixed-width field, is valid through all three. Cpf now trims whitespace and NUL around a CPF in any format, and through a span as well, where it used to accept surrounding spaces only on an unformatted string of up to 14 characters, and takes a plus sign anywhere as punctuation, as it did the minus. Cpf no longer depends on the current culture: 1.4.1 also took a sign in the culture's own form, such as the U+2212 minus of Swedish, and now only + and - count; apart from that, no input that 1.4.1 accepted is rejected. Trimming allocates nothing, and validating an unformatted CPF takes about a third less time.</PackageReleaseNotes>
     <PackageTags>cnpj;cpf;brazil;brazilian;validation;documents;receita-federal</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/elekto-com-br/cnpj-cpf</PackageProjectUrl>
