@@ -82,6 +82,13 @@ from anything that can publish:
 
 ## Releases
 
+Releases are batched. Fixes and changes go to `master` as they are ready, and the tag waits until
+the batch is complete and has had some days on `master` with CI green: at most one release a week.
+Most users are Brazilian banks, for whom each version can mean a change ticket, and three releases
+in one day (1.4.0 to 1.4.2, on 11 November 2026) looked rushed. A security fix is the exception and
+ships when needed. When the maintainer wants to tag soon after a release, remind them of this rule
+before tagging; the maintainer asked for it.
+
 1. Set `<Version>` and `<PackageReleaseNotes>` in
    `src/Elekto.BrazilianDocuments/Elekto.BrazilianDocuments.csproj`. The version must equal the
    tag. The release notes (`vX.Y.Z: ...`) show on nuget.org and become the GitHub Release notes.
