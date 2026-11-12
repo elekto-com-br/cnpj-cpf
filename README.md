@@ -303,11 +303,11 @@ Both types are engineered for high-throughput, zero-allocation validation — sa
 
 | Document | Scenario | Throughput |
 |----------|----------|----------:|
-| CPF | Worst case (invalid check digit) | **~18.6 M/s** |
-| CPF | Mixed dataset (valid + invalid + trimmed) | **~23.1 M/s** |
-| CNPJ numeric | Worst case (invalid check digit) | **~23.5 M/s** |
-| CNPJ numeric + alphanumeric | Mixed dataset (valid + invalid + trimmed) | **~16.4 M/s** |
-| CNPJ alphanumeric | New 2026 format (valid + invalid) | **~7.6 M/s** |
+| CPF | Worst case (invalid check digit) | **~29.2 M/s** |
+| CPF | Mixed dataset (valid + invalid + trimmed) | **~36.0 M/s** |
+| CNPJ numeric | Worst case (invalid check digit) | **~28.7 M/s** |
+| CNPJ numeric + alphanumeric | Mixed dataset (valid + invalid + trimmed) | **~16.3 M/s** |
+| CNPJ alphanumeric | New 2026 format (valid + invalid) | **~7.1 M/s** |
 
 > Measured on **.NET 11.0.0** · Intel Xeon E-2146G @ 3.50 GHz · Windows 11 · BenchmarkDotNet 0.16.0-preview.2.  
 > **Allocated: 0 bytes** across all scenarios — confirmed by `[MemoryDiagnoser]`.  
