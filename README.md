@@ -122,6 +122,10 @@ Console.WriteLine(newCpf.ToString("G")); // 123.456.789-09
 long value = cpf.ToLong(); // 12345678909
 ```
 
+`Cpf` takes the digits bare or punctuated with `.`, `-`, `+`, `/`, `,`, `;` or `\`, which it ignores, and
+trims whitespace and NUL around them, as in fixed-width fields, without allocating. The current
+culture plays no part.
+
 ## Error Handling
 
 When parsing or constructing invalid documents, the library throws a unified exception:

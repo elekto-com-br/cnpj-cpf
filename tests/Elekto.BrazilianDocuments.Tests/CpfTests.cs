@@ -539,6 +539,90 @@ public class CpfTests
         Assert.That(Cpf.IsValid("12345.67890"), Is.True);
     }
 
+    [TestCase(" 123.456.789-09")]
+    [TestCase("123.456.789-09 ")]
+    [TestCase("\t123.456.789-09\r\n")]
+    [TestCase(" 123.456.789-09 ")]   // no-break spaces, which Trim removes too
+    [TestCase("   12345678909   ")]
+    [TestCase("12345678909          ")]         // a fixed-width field, past the 20-character limit
+    public void Validate_WithWhitespaceAroundIt_ShouldTrimIt(string cpf)
+    {
+        // In any format, and the same through a string or a span
+        Assert.That(Cpf.IsValid(cpf), Is.True);
+        Assert.That(Cpf.IsValid(cpf.AsSpan()), Is.True);
+        Assert.That(Cpf.TryParse(cpf, out var parsed), Is.True);
+        Assert.That(parsed.ToLong(), Is.EqualTo(12345678909L));
+        Assert.That(new Cpf(cpf).ToLong(), Is.EqualTo(12345678909L));
+    }
+
+    [TestCase("123 456 789 09")]
+    [TestCase("123.456. 789-09")]
+    public void Validate_WithWhitespaceInside_ShouldBeInvalid(string cpf)
+    {
+        // Only the ends are trimmed
+        Assert.That(Cpf.IsValid(cpf), Is.False);
+        Assert.That(Cpf.IsValid(cpf.AsSpan()), Is.False);
+    }
+
+    [TestCase("+12345678909")]
+    [TestCase("12345678909+")]
+    [TestCase("+123.456.789-09")]
+    [TestCase("-12345678909")]
+    [TestCase(" +12345678909 ")]
+    public void Validate_WithSigns_ShouldIgnoreThemAsPunctuation(string cpf)
+    {
+        Assert.That(Cpf.IsValid(cpf), Is.True);
+        Assert.That(Cpf.IsValid(cpf.AsSpan()), Is.True);
+        Assert.That(new Cpf(cpf).ToLong(), Is.EqualTo(12345678909L));
+    }
+
+    [TestCase("12345678909\0")]
+    [TestCase("12345678909\0\0\0")]
+    [TestCase("12345678909 \t\0")]
+    [TestCase("123.456.789-09\0")]
+    public void Validate_WithNulAtTheEnd_ShouldTrimIt(string cpf)
+    {
+        // As at the end of a C string or a fixed-length buffer; integer parsing took it, so 1.4.1
+        // accepted it, but only without punctuation
+        Assert.That(Cpf.IsValid(cpf), Is.True);
+        Assert.That(Cpf.IsValid(cpf.AsSpan()), Is.True);
+        Assert.That(new Cpf(cpf).ToLong(), Is.EqualTo(12345678909L));
+    }
+
+    [Test]
+    public void Validate_WithNulInside_ShouldBeInvalid()
+    {
+        // Padding only at the ends, as whitespace
+        Assert.That(Cpf.IsValid("123456\078909"), Is.False);
+        Assert.That(Cpf.IsValid("123.456\0.789-09"), Is.False);
+    }
+
+    [Test]
+    [SetCulture("sv-SE")]
+    public void Validate_ShouldNotDependOnTheCulture()
+    {
+        // The minus sign of this culture, U+2212, is no punctuation of a CPF, although integer
+        // parsing in this culture reads "−0" as zero
+        Assert.That(Cpf.IsValid("−0"), Is.False);
+        Assert.That(Cpf.IsValid("+12345678909"), Is.True);
+    }
+
+    [Test]
+    public void IsValid_WithWhitespaceAroundIt_ShouldNotAllocate()
+    {
+        const string padded = "    123.456.789-09    ";
+        Assert.That(Cpf.IsValid(padded), Is.True);
+
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < 1_000; i++)
+        {
+            Cpf.IsValid(padded);
+            Cpf.IsValid(padded.AsSpan());
+        }
+
+        Assert.That(GC.GetAllocatedBytesForCurrentThread() - before, Is.EqualTo(0));
+    }
+
     private class TestCpf
     {
         public string Cpf { get; init; } = null!;

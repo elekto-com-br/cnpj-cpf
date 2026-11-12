@@ -504,29 +504,16 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFo
     }
 
     /// <summary>
-    /// Converts a CPF string to its numeric representation without allocation when possible.
+    /// Converts a CPF string to its numeric representation, with no allocation.
     /// </summary>
     private static bool TryConvertToNumber(string? input, out long cpf)
     {
-        cpf = 0;
-
-        if (input == null) return false;
-        if (string.IsNullOrWhiteSpace(input)) return false;
-
-        // Security: Prevent DoS with excessively long inputs
-        // Max valid CPF with formatting: "000.000.000-00" = 14 characters
-        // Allow some extra room for unusual formatting, but cap at reasonable limit
-        if (input.Length > 20)
-            return false;
-        
-        // Fast path: try parsing directly if no punctuation
-        if (input.Length <= 14 && !ContainsPunctuation(input))
+        if (input == null)
         {
-            if (!long.TryParse(input, out cpf)) return false;
-            if (cpf <= MaxValue) return true;
+            cpf = 0;
             return false;
         }
-        
+
         return TryConvertToNumber(input.AsSpan(), out cpf);
     }
 
@@ -535,13 +522,21 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFo
         cpf = 0;
         if (input.IsEmpty) return false;
 
+        // Padding around the CPF, as in a fixed-width field, is trimmed, as a slice of the span,
+        // with no allocation. An input that starts and ends with a digit has none to trim.
+        if (!IsAsciiDigit(input[0]) || !IsAsciiDigit(input[input.Length - 1]))
+        {
+            input = TrimPadding(input);
+        }
+
         // Security: Prevent DoS with excessively long inputs
         // Max valid CPF with formatting: "000.000.000-00" = 14 characters
         // Allow some extra room for unusual formatting, but cap at reasonable limit
         if (input.Length > 20)
             return false;
 
-        // Slow path: strip punctuation and build the number in a single pass.
+        // Strip punctuation and build the number in a single pass. Signs count as
+        // punctuation, the same whatever the culture.
         // The accumulator is compared against MaxValue instead of counting digits so
         // that excess leading zeros are ignored: they keep the value at 0, while any
         // input carrying more than 11 significant digits grows past MaxValue and is
@@ -559,7 +554,7 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFo
                 if (result > MaxValue)
                     return false; // More than 11 significant digits: not a CPF
             }
-            else if (c is not '.' and not '-' and not ',' and not ';' and not '\\' and not '/')
+            else if (c is not '.' and not '-' and not '+' and not ',' and not ';' and not '\\' and not '/')
             {
                 return false; // Invalid character
             }
@@ -572,20 +567,26 @@ public readonly struct Cpf : IComparable<Cpf>, IComparable, IEquatable<Cpf>, IFo
         return true;
     }
 
-    private static bool ContainsPunctuation(string s)
+    // Padding is whitespace, and NUL, which C strings and fixed-length buffers leave at the end.
+    // Kept out of TryConvertToNumber, which runs on every input, so that the JIT does not inline
+    // the loops there.
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static ReadOnlySpan<char> TrimPadding(ReadOnlySpan<char> input)
     {
-        return ContainsPunctuation(s.AsSpan());
+        var start = 0;
+        while (start < input.Length && IsPadding(input[start]))
+            start++;
+
+        var end = input.Length;
+        while (end > start && IsPadding(input[end - 1]))
+            end--;
+
+        return input.Slice(start, end - start);
     }
 
-    private static bool ContainsPunctuation(ReadOnlySpan<char> s)
-    {
-        foreach (var c in s)
-        {
-            if (c is '.' or '-' or ',' or ';' or '\\' or '/')
-                return true;
-        }
-        return false;
-    }
+    private static bool IsPadding(char c) => c == '\0' || char.IsWhiteSpace(c);
+
+    private static bool IsAsciiDigit(char c) => (uint)(c - '0') <= 9;
 
     /// <summary>
     /// Returns a hash code for this instance.
