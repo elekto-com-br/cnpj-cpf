@@ -61,7 +61,9 @@ Dependabot (`.github/dependabot.yml`) proposes updates weekly, each a week after
 (cooldown). Minor and patch updates of the test and benchmark packages come grouped. A major
 version, or any update of what the library itself depends on, comes in a pull request of its own:
 the target frameworks and the netstandard2.0 dependencies are what users get, so a change to them
-belongs in the release notes.
+belongs in the release notes. Dependabot ignores the major versions of System.Text.Json: it proposes
+only the newest version, so 11.0.0 hid the 10.0.15 patch, and moving the netstandard2.0 build to a
+new major is a decision of its own, announced in the release notes.
 
 ## Workflows
 

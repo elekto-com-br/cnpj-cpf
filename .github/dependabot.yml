@@ -41,3 +41,12 @@ updates:
         update-types:
           - minor
           - patch
+    # Dependabot proposes only the newest version of a package, so System.Text.Json 11.0.0 hid
+    # 10.0.15, released the same day. A new major raises the minimum System.Text.Json of every
+    # netstandard2.0 user, and a project that references the old one directly fails to restore
+    # (NU1605). Dependabot proposes the patches of the current major, and moving to a new one is a
+    # change of its own, announced in the release notes.
+    ignore:
+      - dependency-name: 'System.Text.Json'
+        update-types:
+          - 'version-update:semver-major'
